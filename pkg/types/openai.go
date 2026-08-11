@@ -53,6 +53,7 @@ type ChatMessage struct {
 	Role             string          `json:"role"`
 	Content          json.RawMessage `json:"content"`
 	ReasoningContent *string         `json:"reasoning_content,omitempty"`
+	Reasoning        *string         `json:"reasoning,omitempty"`
 	ToolCalls        []ToolCall      `json:"tool_calls,omitempty"`
 	Name             string          `json:"name,omitempty"`
 	ToolCallID       string          `json:"tool_call_id,omitempty"`
