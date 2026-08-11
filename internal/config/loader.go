@@ -471,8 +471,8 @@ func validateOverrideMap(label string, overrides map[string]ModelConfig) error {
 		if mc.ModelID == "" {
 			return fmt.Errorf("%s[%q] is missing required field model_id", label, key)
 		}
-		if mc.Provider != "" && mc.Provider != "opencode-go" && mc.Provider != "opencode-zen" {
-			return fmt.Errorf("%s[%q] has invalid provider %q (must be \"opencode-go\" or \"opencode-zen\")", label, key, mc.Provider)
+		if mc.Provider != "" && mc.Provider != "opencode-go" && mc.Provider != "opencode-zen" && mc.Provider != "openrouter" && mc.Provider != "aws-bedrock" && mc.Provider != "anthropic" && mc.Provider != "minimax" {
+			return fmt.Errorf("%s[%q] has invalid provider %q (must be \"opencode-go\", \"opencode-zen\", \"openrouter\", \"aws-bedrock\", \"anthropic\", or \"minimax\")", label, key, mc.Provider)
 		}
 	}
 	return nil

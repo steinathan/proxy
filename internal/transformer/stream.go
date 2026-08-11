@@ -506,8 +506,16 @@ func (h *StreamHandler) processSSELine(
 
 	choice := chunk.Choices[0]
 
-	// Handle reasoning content deltas
-	if choice.Delta.ReasoningContent != nil && *choice.Delta.ReasoningContent != "" {
+	// Handle reasoning content deltas. Two upstream conventions exist:
+	// DeepSeek streams `reasoning_content`; OpenAI-standard reasoning models
+	// (o1, MiniMax M3, etc.) stream `reasoning`. Handle both.
+	reasoningText := ""
+	if choice.Delta.ReasoningContent != nil {
+		reasoningText = *choice.Delta.ReasoningContent
+	} else if choice.Delta.Reasoning != nil {
+		reasoningText = *choice.Delta.Reasoning
+	}
+	if reasoningText != "" {
 		if !*reasoningStarted {
 			// If text was already started, close it first
 			if *contentStarted {
@@ -534,7 +542,7 @@ func (h *StreamHandler) processSSELine(
 
 		delta := types.Delta{
 			Type:     "thinking_delta",
-			Thinking: *choice.Delta.ReasoningContent,
+			Thinking: reasoningText,
 		}
 		event := types.MessageEvent{
 			Type:  "content_block_delta",
