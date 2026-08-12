@@ -73,6 +73,12 @@ func NewServer(atomic *config.AtomicConfig, captureLogger *debug.CaptureLogger) 
 	_ = providerRegistry.Register(provider.NewOpenRouterProvider(atomic))
 	_ = providerRegistry.Register(provider.NewMinimaxProvider(atomic))
 
+	// Generic OpenAI-compatible providers (groq, xai, mistral, ...). One
+	// instance per configured entry in config.json's `generic_providers`.
+	for _, entry := range cfg.GenericProviders {
+		_ = providerRegistry.Register(provider.NewGenericProvider(atomic, entry))
+	}
+
 	// Create status store for the statusline endpoint.
 	statusStore := status.NewStore(0)
 

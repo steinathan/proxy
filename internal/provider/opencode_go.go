@@ -118,7 +118,7 @@ func (p *OpenCodeGoProvider) Stream(ctx context.Context, req *core.NormalizedReq
 func (p *OpenCodeGoProvider) executeOpenAI(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeGo.BaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamFalse := false
@@ -158,7 +158,7 @@ func (p *OpenCodeGoProvider) executeOpenAI(ctx context.Context, req *core.Normal
 func (p *OpenCodeGoProvider) streamOpenAI(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeGo.BaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamTrue := true
@@ -177,7 +177,7 @@ func (p *OpenCodeGoProvider) streamOpenAI(ctx context.Context, req *core.Normali
 func (p *OpenCodeGoProvider) executeAnthropic(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeGo.AnthropicBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)
@@ -220,7 +220,7 @@ func (p *OpenCodeGoProvider) executeAnthropic(ctx context.Context, req *core.Nor
 func (p *OpenCodeGoProvider) streamAnthropic(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeGo.AnthropicBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)

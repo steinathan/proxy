@@ -75,7 +75,7 @@ func (p *OpenRouterProvider) StreamIdleTimeout(model config.ModelConfig) time.Du
 func (p *OpenRouterProvider) Execute(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenRouter.BaseURL
-	apiKey := p.nextAPIKey(cfg.OpenRouter.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.OpenRouter.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamFalse := false
@@ -116,7 +116,7 @@ func (p *OpenRouterProvider) Execute(ctx context.Context, req *core.NormalizedRe
 func (p *OpenRouterProvider) Stream(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenRouter.BaseURL
-	apiKey := p.nextAPIKey(cfg.OpenRouter.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.OpenRouter.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamTrue := true

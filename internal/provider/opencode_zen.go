@@ -133,7 +133,7 @@ func (p *OpenCodeZenProvider) Stream(ctx context.Context, req *core.NormalizedRe
 func (p *OpenCodeZenProvider) executeOpenAI(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.BaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamFalse := false
@@ -173,7 +173,7 @@ func (p *OpenCodeZenProvider) executeOpenAI(ctx context.Context, req *core.Norma
 func (p *OpenCodeZenProvider) streamOpenAI(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.BaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	openaiReq := transformer.TransformRequestFromNormalized(req, model)
 	streamTrue := true
@@ -192,7 +192,7 @@ func (p *OpenCodeZenProvider) streamOpenAI(ctx context.Context, req *core.Normal
 func (p *OpenCodeZenProvider) executeAnthropic(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.AnthropicBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)
@@ -235,7 +235,7 @@ func (p *OpenCodeZenProvider) executeAnthropic(ctx context.Context, req *core.No
 func (p *OpenCodeZenProvider) streamAnthropic(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.AnthropicBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)
@@ -271,7 +271,7 @@ func (p *OpenCodeZenProvider) streamAnthropic(ctx context.Context, req *core.Nor
 func (p *OpenCodeZenProvider) executeResponses(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.ResponsesBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	responsesReq := transformer.NormalizedToResponses(req, model)
 	responsesReq.Stream = false
@@ -310,7 +310,7 @@ func (p *OpenCodeZenProvider) executeResponses(ctx context.Context, req *core.No
 func (p *OpenCodeZenProvider) streamResponses(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.ResponsesBaseURL
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	responsesReq := transformer.NormalizedToResponses(req, model)
 	responsesReq.Stream = true
@@ -328,7 +328,7 @@ func (p *OpenCodeZenProvider) streamResponses(ctx context.Context, req *core.Nor
 func (p *OpenCodeZenProvider) executeGemini(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.GeminiBaseURL + "/" + model.ModelID
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	geminiReq := transformer.NormalizedToGemini(req, model)
 	geminiReq.Stream = false
@@ -367,7 +367,7 @@ func (p *OpenCodeZenProvider) executeGemini(ctx context.Context, req *core.Norma
 func (p *OpenCodeZenProvider) streamGemini(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.OpenCodeZen.GeminiBaseURL + "/" + model.ModelID
-	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 
 	geminiReq := transformer.NormalizedToGemini(req, model)
 	geminiReq.Stream = true

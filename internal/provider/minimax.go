@@ -75,7 +75,7 @@ func (p *MinimaxProvider) StreamIdleTimeout(model config.ModelConfig) time.Durat
 func (p *MinimaxProvider) Execute(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.Minimax.BaseURL
-	apiKey := p.nextAPIKey(cfg.Minimax.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.Minimax.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)
@@ -122,7 +122,7 @@ func (p *MinimaxProvider) Execute(ctx context.Context, req *core.NormalizedReque
 func (p *MinimaxProvider) Stream(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (io.ReadCloser, error) {
 	cfg := p.atomic.Get()
 	endpoint := cfg.Minimax.BaseURL
-	apiKey := p.nextAPIKey(cfg.Minimax.EffectiveAPIKeys())
+	apiKey := p.nextAPIKey(cfg.Minimax.EffectiveAPIKeys(), "")
 
 	anthropicReq := transformer.NormalizedToAnthropic(req, model)
 	rawBody, err := json.Marshal(anthropicReq)

@@ -24,6 +24,7 @@ import (
 	"github.com/routatic/proxy/internal/history"
 	"github.com/routatic/proxy/internal/metrics"
 	"github.com/routatic/proxy/internal/middleware"
+	"github.com/routatic/proxy/internal/provider"
 	"github.com/routatic/proxy/internal/router"
 	"github.com/routatic/proxy/internal/token"
 	"github.com/routatic/proxy/internal/transformer"
@@ -397,6 +398,12 @@ func (h *MessagesHandler) HandleMessages(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("X-Request-ID", requestID)
 
 	userID := extractLoopbackUserID(h.atomic, r)
+
+	// Thread the user ID into the request context so the provider layer can
+	// pick a sticky key slot from the user's pool (hash(userID) % len(keys)).
+	// When userID is empty (single-user / pre-patch binary / no X-User-ID
+	// header) the provider falls back to round-robin.
+	r = r.WithContext(provider.WithUserID(r.Context(), userID))
 
 	// Rate limiting
 	clientIP := middleware.GetClientIP(r)

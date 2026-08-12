@@ -341,7 +341,7 @@ func (p *AWSBedrockProvider) bedrockAPIKey(cfg *config.Config) string {
 	if cfg.AWSBedrock.APIKey != "" {
 		return cfg.AWSBedrock.APIKey
 	}
-	return p.nextAPIKey(cfg.EffectiveAPIKeys())
+	return p.nextAPIKey(cfg.EffectiveAPIKeys(), "")
 }
 
 // needsOpenaiPath returns true for models that require the /openai path prefix
