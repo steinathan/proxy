@@ -174,7 +174,7 @@ func NewServer(atomic *config.AtomicConfig, captureLogger *debug.CaptureLogger) 
 	srv := &Server{
 		atomic:    atomic,
 		httpSrv:   httpSrv,
-		mux:       mux,
+		mux:       sharedSecretMiddleware(mux),
 		logger:    logger,
 		levelVar:  levelVar,
 		History:   hist,
