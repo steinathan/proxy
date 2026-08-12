@@ -17,4 +17,5 @@ type RequestRecord struct {
 	Success      bool          // whether it completed successfully
 	ErrorMsg     string        // error message if failed
 	Attempt      int           // attempt number in fallback chain (1 = primary, >1 = fallback)
+	UserID       string        // internal user id from X-User-ID (loopback only); empty otherwise
 }

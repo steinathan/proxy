@@ -225,6 +225,7 @@ func newAnthropicRequest(in *http.Request, baseURL string, body []byte) (*http.R
 	}
 	out.Header = in.Header.Clone()
 	removeHopHeaders(out.Header)
+	out.Header.Del("X-User-ID")
 	out.ContentLength = int64(len(body))
 	return out, nil
 }

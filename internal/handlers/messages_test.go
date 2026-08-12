@@ -476,8 +476,7 @@ func TestHandleStreaming_UsageLimitSkipsRemainingProviderModels(t *testing.T) {
 	stream := true
 	req := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
 	rec := httptest.NewRecorder()
-	h.handleStreaming(
-		rec,
+	h.handleStreaming(rec,
 		req,
 		&types.MessageRequest{Stream: &stream},
 		&core.NormalizedRequest{Stream: true},
@@ -489,7 +488,8 @@ func TestHandleStreaming_UsageLimitSkipsRemainingProviderModels(t *testing.T) {
 		nil,
 		router.ScenarioDefault,
 		"",
-	)
+		"",
+		)
 	if goCalls != 1 || zenCalls != 1 {
 		t.Fatalf("goCalls=%d zenCalls=%d; want 1 each", goCalls, zenCalls)
 	}
@@ -729,8 +729,15 @@ func TestHandleStreaming_GoAnthropicModel_SendsRawAnthropicBody(t *testing.T) {
 	ctx, cancel := context.WithCancel(req.Context())
 	defer cancel()
 
-	handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{}, chain, rawBody, router.Scenario(""), "")
-
+	handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")
 	if len(capturedBody) == 0 {
 		t.Fatal("upstream received no body")
 	}
@@ -824,8 +831,15 @@ func TestHandleStreaming_GoAnthropicModel_FallsThroughOnError(t *testing.T) {
 	ctx, cancel := context.WithCancel(req.Context())
 	defer cancel()
 
-	handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{}, chain, rawBody, router.Scenario(""), "")
-
+	handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")
 	finalCount := atomic.LoadInt32(&callCount)
 	if finalCount != 2 {
 		t.Fatalf("expected 2 upstream calls (1 fail + 1 success), got %d", finalCount)
@@ -873,17 +887,22 @@ func TestHandleMessages_UnknownProvider(t *testing.T) {
 		t.Fatalf("NewCounter: %v", err)
 	}
 
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
-		nil, // fallbackHandler
+		nil,
+		// fallbackHandler
 		tokenCounter,
 		metrics.New(),
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -956,17 +975,22 @@ func TestHandleMessages_StreamingMinimaxM3_UsesAnthropicEndpoint(t *testing.T) {
 		t.Fatalf("NewCounter: %v", err)
 	}
 
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
-		nil, // fallbackHandler
+		nil,
+		// fallbackHandler
 		tokenCounter,
 		metrics.New(),
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1071,17 +1095,21 @@ func TestHandleNonStreaming_GoAnthropicModel_ReplacesModelInBody(t *testing.T) {
 		t.Fatalf("NewCounter: %v", err)
 	}
 
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
 		router.NewFallbackHandler(slog.Default(), 3, 30*time.Second),
 		tokenCounter,
 		metrics.New(),
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1189,17 +1217,21 @@ func TestHandleNonStreaming_ZenAnthropicModel_ReplacesModelInBody(t *testing.T) 
 		t.Fatalf("NewCounter: %v", err)
 	}
 
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
 		router.NewFallbackHandler(slog.Default(), 3, 30*time.Second),
 		tokenCounter,
 		metrics.New(),
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1313,8 +1345,15 @@ func TestHandleStreaming_ConfigurableTimeout(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{Stream: true}, chain, rawBody, router.Scenario(""), "")
-	}()
+		handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{Stream: true},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")	}()
 
 	select {
 	case <-done:
@@ -1365,8 +1404,15 @@ func TestHandleStreaming_ClientContextCanceled_StopsFallback(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{Stream: true}, chain, rawBody, router.Scenario(""), "")
-	}()
+		handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{Stream: true},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")	}()
 
 	select {
 	case <-done:
@@ -1422,8 +1468,15 @@ func TestHandleStreaming_ClientDisconnectsDuringStream_StopsFallback(t *testing.
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{Stream: true}, chain, rawBody, router.Scenario(""), "")
-	}()
+		handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{Stream: true},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")	}()
 
 	time.Sleep(100 * time.Millisecond)
 	cancel()
@@ -1500,8 +1553,15 @@ func TestHandleStreaming_PerModelTimeoutFallback(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{Stream: true}, chain, rawBody, router.Scenario(""), "")
-	}()
+		handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{Stream: true},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")	}()
 
 	select {
 	case <-done:
@@ -1554,17 +1614,21 @@ func TestHandleNonStreaming_ParentContextCanceled_No502(t *testing.T) {
 	}
 
 	m := metrics.New()
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
 		router.NewFallbackHandler(slog.Default(), 3, 30*time.Second),
 		tokenCounter,
 		m,
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1637,17 +1701,21 @@ func TestHandleNonStreaming_ParentDeadlineExceeded_No502(t *testing.T) {
 	}
 
 	m := metrics.New()
-	handler := NewMessagesHandler(
-		ocClient,
-		nil, // providerRegistry
+	handler := NewMessagesHandler(ocClient,
+		nil,
+		// providerRegistry
 		modelRouter,
 		router.NewFallbackHandler(slog.Default(), 3, 30*time.Second),
 		tokenCounter,
 		m,
-		nil, // captureLogger
-		nil, // hist
-		nil, // storage
-	)
+		nil,
+		// captureLogger
+		nil,
+		// hist
+		nil,
+		// storage
+		nil,
+		)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1865,8 +1933,15 @@ func TestHandleStreaming_AnthropicRaw_NoKeepaliveInjection(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handler.handleStreaming(recorder, req.WithContext(ctx), &anthropicReq, &core.NormalizedRequest{Stream: true}, chain, rawBody, router.Scenario(""), "")
-	}()
+		handler.handleStreaming(recorder,
+		req.WithContext(ctx),
+		&anthropicReq,
+		&core.NormalizedRequest{Stream: true},
+		chain,
+		rawBody,
+		router.Scenario(""),
+		"",
+		"")	}()
 
 	time.Sleep(1000 * time.Millisecond)
 	close(blockCh)
@@ -1890,3 +1965,58 @@ func TestHandleStreaming_AnthropicRaw_NoKeepaliveInjection(t *testing.T) {
 		t.Errorf("keepalive comment leaked into Anthropic raw stream output (concurrent write bug):\n%s", body)
 	}
 }
+
+func TestExtractLoopbackUserID(t *testing.T) {
+	// Load a config with TrustLoopbackUserHeader=false. atomic.Get() returns
+	// the same pointer each call so the first load is enough for the toggle.
+	cfgOff := &config.Config{TrustLoopbackUserHeader: false}
+	atomicOff := config.NewAtomicConfig(cfgOff, "/tmp/test-config.json")
+
+	// Load a config with TrustLoopbackUserHeader=true.
+	cfgOn := &config.Config{TrustLoopbackUserHeader: true}
+	atomicOn := config.NewAtomicConfig(cfgOn, "/tmp/test-config.json")
+
+	// Build a request that mimics a loopback caller with X-User-ID=alice.
+	loopbackReq := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+	loopbackReq.RemoteAddr = "127.0.0.1:12345"
+	loopbackReq.Header.Set("X-User-ID", "alice")
+
+	// Build a request that mimics a non-loopback caller with X-User-ID=bob.
+	remoteReq := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+	remoteReq.RemoteAddr = "1.2.3.4:12345"
+	remoteReq.Header.Set("X-User-ID", "bob")
+
+	// IPv6 loopback must also be accepted.
+	v6Req := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+	v6Req.RemoteAddr = "[::1]:12345"
+	v6Req.Header.Set("X-User-ID", "carol")
+
+	// Trust off → header ignored regardless of remote.
+	if got := extractLoopbackUserID(atomicOff, loopbackReq); got != "" {
+		t.Errorf("trust off + loopback: got %q, want \"\"", got)
+	}
+	if got := extractLoopbackUserID(atomicOff, remoteReq); got != "" {
+		t.Errorf("trust off + non-loopback: got %q, want \"\"", got)
+	}
+
+	// Trust on + loopback (IPv4) → header returned, trimmed.
+	if got := extractLoopbackUserID(atomicOn, loopbackReq); got != "alice" {
+		t.Errorf("trust on + ipv4 loopback: got %q, want %q", got, "alice")
+	}
+
+	// Trust on + loopback (IPv6) → header returned.
+	if got := extractLoopbackUserID(atomicOn, v6Req); got != "carol" {
+		t.Errorf("trust on + ipv6 loopback: got %q, want %q", got, "carol")
+	}
+
+	// Trust on + non-loopback → header ignored.
+	if got := extractLoopbackUserID(atomicOn, remoteReq); got != "" {
+		t.Errorf("trust on + non-loopback: got %q, want \"\"", got)
+	}
+
+	// nil atomic → no panic, returns "".
+	if got := extractLoopbackUserID(nil, loopbackReq); got != "" {
+		t.Errorf("nil atomic: got %q, want \"\"", got)
+	}
+}
+

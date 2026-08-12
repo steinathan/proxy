@@ -126,6 +126,7 @@ func NewServer(atomic *config.AtomicConfig, captureLogger *debug.CaptureLogger) 
 		captureLogger,
 		hist,
 		storageWriter,
+		atomic,
 	)
 	healthHandler := handlers.NewHealthHandler(tokenCounter, fallbackHandler, metrics, statusStore)
 	modelsHandler := handlers.NewModelsHandler(modelRouter)

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -48,6 +49,7 @@ type MessagesHandler struct {
 	captureLogger       *debug.CaptureLogger
 	history             *history.History // optional: nil means no GUI history
 	storage             StorageWriter    // optional: SQLite persistence for requests/latency
+	atomic              *config.AtomicConfig
 }
 
 // responseWriter wraps http.ResponseWriter to track if headers were written.
@@ -319,6 +321,28 @@ func startKeepaliveHeartbeat(ctx context.Context, rw *responseWriter, paused *in
 	}
 }
 
+// extractLoopbackUserID reads X-User-ID from the request only when
+// trust_loopback_user_header is enabled AND the remote address is a
+// loopback address. The trust boundary is the loopback network — the
+// public internet cannot reach the proxy. Returns "" otherwise so no
+// user attribution leaks into history.
+func extractLoopbackUserID(atomic *config.AtomicConfig, r *http.Request) string {
+	if atomic == nil {
+		return ""
+	}
+	if !atomic.Get().TrustLoopbackUserHeader {
+		return ""
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	if host != "127.0.0.1" && host != "::1" {
+		return ""
+	}
+	return strings.TrimSpace(r.Header.Get("X-User-ID"))
+}
+
 // NewMessagesHandler creates a new messages handler.
 func NewMessagesHandler(
 	openCodeClient *client.OpenCodeClient,
@@ -330,6 +354,7 @@ func NewMessagesHandler(
 	captureLogger *debug.CaptureLogger,
 	hist *history.History,
 	storage StorageWriter,
+	atomic *config.AtomicConfig,
 ) *MessagesHandler {
 	return &MessagesHandler{
 		client:              openCodeClient,
@@ -349,6 +374,7 @@ func NewMessagesHandler(
 		captureLogger:       captureLogger,
 		history:             hist,
 		storage:             storage,
+		atomic:              atomic,
 	}
 }
 
@@ -369,6 +395,8 @@ func (h *MessagesHandler) HandleMessages(w http.ResponseWriter, r *http.Request)
 		requestID = h.requestIDGen.Generate()
 	}
 	w.Header().Set("X-Request-ID", requestID)
+
+	userID := extractLoopbackUserID(h.atomic, r)
 
 	// Rate limiting
 	clientIP := middleware.GetClientIP(r)
@@ -493,9 +521,9 @@ func (h *MessagesHandler) HandleMessages(w http.ResponseWriter, r *http.Request)
 	}
 
 	if isStreaming {
-		h.handleStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID)
+		h.handleStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID)
 	} else {
-		h.handleNonStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID)
+		h.handleNonStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID)
 	}
 }
 
@@ -605,6 +633,7 @@ func (h *MessagesHandler) handleStreaming(
 	rawBody json.RawMessage,
 	scenario router.Scenario,
 	requestID string,
+	userID string,
 ) {
 	clientCtx := r.Context()
 
@@ -673,6 +702,7 @@ func (h *MessagesHandler) handleStreaming(
 				Streaming:    true,
 				Success:      true,
 				Attempt:      1, // streaming fallback attempts not yet tracked in record; treat as primary
+				UserID:       userID,
 			}
 			if h.history != nil {
 				h.history.Add(rec)
@@ -1172,6 +1202,7 @@ func (h *MessagesHandler) handleNonStreaming(
 	rawBody json.RawMessage,
 	scenario router.Scenario,
 	requestID string,
+	userID string,
 ) {
 	ctx := r.Context()
 	startTime := time.Now()
@@ -1271,6 +1302,7 @@ func (h *MessagesHandler) handleNonStreaming(
 		Streaming:    false,
 		Success:      true,
 		Attempt:      result.Attempted,
+		UserID:       userID,
 	}
 	if h.history != nil {
 		h.history.Add(rec)
