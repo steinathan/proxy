@@ -18,6 +18,7 @@ RUN apk add --no-cache ca-certificates tzdata wget && \
 COPY --from=builder /app/routatic-proxy /usr/local/bin/routatic-proxy
 RUN ln -s /usr/local/bin/routatic-proxy /usr/local/bin/oc-go-cc
 COPY --from=builder /app/configs/config.json /etc/routatic-proxy/config.json
+COPY --from=builder /app/configs/providers.txt /etc/routatic-proxy/providers.txt
 RUN chown -R appuser:appgroup /etc/routatic-proxy
 
 USER appuser

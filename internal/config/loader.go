@@ -108,6 +108,47 @@ func ResolveConfigPath() string {
 	return path
 }
 
+// providersFilename is the name of the file that lists the provider names
+// allowed in model_overrides[*].provider and model_family_overrides[*].provider.
+// It lives next to config.json.
+const providersFilename = "providers.txt"
+
+// ResolveProvidersPath returns the absolute path to providers.txt, sibling to
+// the active config file. If the config path can't be resolved, falls back to
+// the default location — the image bakes both files together so the sibling
+// relationship always holds.
+func ResolveProvidersPath() string {
+	configPath := ResolveConfigPath()
+	if configPath != "" {
+		return filepath.Join(filepath.Dir(configPath), providersFilename)
+	}
+	return filepath.Join(expandHome("~/.config/routatic-proxy"), providersFilename)
+}
+
+// LoadProviders reads providers.txt and returns the set of allowed provider
+// names. Comments (#) and blank lines are ignored. If the file is missing
+// returns an empty set (no allowlist enforced) and a nil error — the user
+// can run without one and the proxy will skip the provider-name check.
+// A malformed file (read error, non-UTF-8) returns an error.
+func LoadProviders(path string) (map[string]bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]bool{}, nil
+		}
+		return nil, fmt.Errorf("reading providers file %s: %w", path, err)
+	}
+	set := make(map[string]bool)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		set[line] = true
+	}
+	return set, nil
+}
+
 // expandHome replaces a leading ~ with the user's home directory.
 func expandHome(path string) string {
 	if strings.HasPrefix(path, "~/") {
@@ -311,6 +352,10 @@ func applyDefaults(cfg *Config) {
 
 // validate checks that all required configuration fields are present.
 func validate(cfg *Config) error {
+	providers, err := LoadProviders(ResolveProvidersPath())
+	if err != nil {
+		return err
+	}
 	if cfg.APIKey == "" && len(cfg.APIKeys) == 0 {
 		return fmt.Errorf("api_key or api_keys is required (set via config file or ROUTATIC_PROXY_API_KEY env var; OC_GO_CC_API_KEY is still supported)")
 	}
@@ -358,11 +403,11 @@ func validate(cfg *Config) error {
 		return fmt.Errorf("openrouter.api_keys: %w", err)
 	}
 
-	if err := validateModelOverrides(cfg.ModelOverrides); err != nil {
+	if err := validateModelOverrides(cfg.ModelOverrides, providers); err != nil {
 		return err
 	}
 
-	if err := validateModelFamilyOverrides(cfg.ModelFamilyOverrides); err != nil {
+	if err := validateModelFamilyOverrides(cfg.ModelFamilyOverrides, providers); err != nil {
 		return err
 	}
 
@@ -448,31 +493,34 @@ func validateAPIKeys(keys []string) error {
 // and a recognized provider. Empty model_id would produce broken upstream URLs
 // (surfacing far from the config error); an unknown provider would silently
 // fall through to defaults at request time.
-func validateModelOverrides(overrides map[string]ModelConfig) error {
-	return validateOverrideMap("model_overrides", overrides)
+func validateModelOverrides(overrides map[string]ModelConfig, providers map[string]bool) error {
+	return validateOverrideMap("model_overrides", overrides, providers)
 }
 
 // validateModelFamilyOverrides ensures each family override entry has a
 // non-empty family key, a non-empty model_id, and a recognized provider.
-func validateModelFamilyOverrides(overrides map[string]ModelConfig) error {
+func validateModelFamilyOverrides(overrides map[string]ModelConfig, providers map[string]bool) error {
 	for key := range overrides {
 		if strings.TrimSpace(key) == "" {
 			return fmt.Errorf("model_family_overrides has an empty family key")
 		}
 	}
-	return validateOverrideMap("model_family_overrides", overrides)
+	return validateOverrideMap("model_family_overrides", overrides, providers)
 }
 
 // validateOverrideMap validates the shared shape of override maps: each entry
-// must have a non-empty model_id and a recognized provider. label names the
-// config section for error messages.
-func validateOverrideMap(label string, overrides map[string]ModelConfig) error {
+// must have a non-empty model_id and a provider name listed in allowlist (when
+// set). label names the config section for error messages. providers is the
+// set loaded from providers.txt; an empty set disables the allowlist check.
+// An empty mc.Provider is also accepted (defaults to opencode-go at request
+// time).
+func validateOverrideMap(label string, overrides map[string]ModelConfig, providers map[string]bool) error {
 	for key, mc := range overrides {
 		if mc.ModelID == "" {
 			return fmt.Errorf("%s[%q] is missing required field model_id", label, key)
 		}
-		if mc.Provider != "" && mc.Provider != "opencode-go" && mc.Provider != "opencode-zen" && mc.Provider != "openrouter" && mc.Provider != "aws-bedrock" && mc.Provider != "anthropic" && mc.Provider != "minimax" {
-			return fmt.Errorf("%s[%q] has invalid provider %q (must be \"opencode-go\", \"opencode-zen\", \"openrouter\", \"aws-bedrock\", \"anthropic\", or \"minimax\")", label, key, mc.Provider)
+		if mc.Provider != "" && len(providers) > 0 && !providers[mc.Provider] {
+			return fmt.Errorf("%s[%q] has invalid provider %q (must be one listed in providers.txt)", label, key, mc.Provider)
 		}
 	}
 	return nil

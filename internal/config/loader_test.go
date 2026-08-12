@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -679,15 +680,80 @@ func TestValidateModelOverrides_EmptyModelID(t *testing.T) {
 	}
 }
 
-func TestValidateModelOverrides_InvalidProvider(t *testing.T) {
+func TestValidateModelOverrides_AnyProviderNameAccepted(t *testing.T) {
+	// When providers.txt is missing (its default state for a user's home dir),
+	// the allowlist is empty and any provider name passes. validate() looks
+	// up the providers file next to the config; a test that doesn't mount one
+	// hits the not-exist branch and gets the permissive behavior.
 	cfg := &Config{
 		APIKey: "test",
 		ModelOverrides: map[string]ModelConfig{
-			"bad-provider": {Provider: "unknown-provider", ModelID: "some-model"},
+			"arbitrary-provider": {Provider: "anything-goes", ModelID: "some-model"},
 		},
 	}
-	if err := validate(cfg); err == nil {
-		t.Fatal("expected validation error for unknown provider, got nil")
+	if err := validate(cfg); err != nil {
+		t.Errorf("expected no validation error when providers.txt is absent, got %v", err)
+	}
+}
+
+func TestValidateOverrideMap_AllowlistEnforced(t *testing.T) {
+	allowlist := map[string]bool{"opencode-go": true, "openrouter": true}
+	overrides := map[string]ModelConfig{
+		"good":    {Provider: "opencode-go", ModelID: "m1"},
+		"empty":   {ModelID: "m2"},
+		"bad":     {Provider: "deepseek", ModelID: "m3"},
+		"unknown": {Provider: "totally-made-up", ModelID: "m4"},
+	}
+	err := validateOverrideMap("model_overrides", overrides, allowlist)
+	if err == nil {
+		t.Fatal("expected validation error for unlisted provider, got nil")
+	}
+	if !strings.Contains(err.Error(), "deepseek") {
+		t.Errorf("expected error to mention the rejected provider name, got %v", err)
+	}
+}
+
+func TestValidateOverrideMap_EmptyAllowlistNoOp(t *testing.T) {
+	overrides := map[string]ModelConfig{
+		"anything": {Provider: "any-name-at-all", ModelID: "m1"},
+	}
+	if err := validateOverrideMap("model_overrides", overrides, nil); err != nil {
+		t.Errorf("expected no error with nil allowlist, got %v", err)
+	}
+	if err := validateOverrideMap("model_overrides", overrides, map[string]bool{}); err != nil {
+		t.Errorf("expected no error with empty allowlist, got %v", err)
+	}
+}
+
+func TestLoadProviders(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "providers.txt")
+	contents := "# comment line\n\nopencode-go\nopencode-zen\n  openrouter  \n# trailing comment\n"
+	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadProviders(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]bool{"opencode-go": true, "opencode-zen": true, "openrouter": true}
+	if len(got) != len(want) {
+		t.Errorf("expected %d providers, got %d: %v", len(want), len(got), got)
+	}
+	for k := range want {
+		if !got[k] {
+			t.Errorf("missing provider %q in result", k)
+		}
+	}
+}
+
+func TestLoadProviders_MissingFileReturnsEmptySet(t *testing.T) {
+	got, err := LoadProviders("/tmp/does-not-exist-providers.txt")
+	if err != nil {
+		t.Fatalf("expected nil error for missing file, got %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty set, got %v", got)
 	}
 }
 

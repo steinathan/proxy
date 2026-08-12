@@ -1,0 +1,34 @@
+# Recognized providers for model_overrides[*].provider and
+# model_family_overrides[*].provider. Loaded by loader.validateOverrideMap.
+# One provider per line. Lines starting with `#` and blank lines are ignored.
+# Add a name here when wiring a new provider into the upstream client layer;
+# the proxy will reject unknown provider names at config-load time so typos
+# fail fast instead of producing broken upstream URLs at request time.
+
+opencode-go
+opencode-zen
+openrouter
+aws-bedrock
+anthropic
+minimax
+deepseek
+glm
+qwen
+kimi
+kie_gpt52
+kie_gpt54
+kie_gpt55
+kie_claude_opus5
+kie_claude_opus48
+kie_claude_sonnet5
+kie_claude_sonnet46
+kie_claude_haiku45
+kie_gemini31pro
+kie_gemini25pro
+kie_gemini25flash
+kie_grok45
+kie_grok43
+groq
+cerebras
+together
+gemini_free

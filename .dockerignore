@@ -4,5 +4,4 @@
 bin/
 dist/
 .tmp/
-configs/config.json
 *.md
