@@ -528,9 +528,9 @@ func (h *MessagesHandler) HandleMessages(w http.ResponseWriter, r *http.Request)
 	}
 
 	if isStreaming {
-		h.handleStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID)
+		h.handleStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID, anthropicReq.Model)
 	} else {
-		h.handleNonStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID)
+		h.handleNonStreaming(w, r, &anthropicReq, normalizedReq, modelChain, rawBody, routeResult.Scenario, requestID, userID, anthropicReq.Model)
 	}
 }
 
@@ -641,6 +641,7 @@ func (h *MessagesHandler) handleStreaming(
 	scenario router.Scenario,
 	requestID string,
 	userID string,
+	requestedModel string,
 ) {
 	clientCtx := r.Context()
 
@@ -794,7 +795,7 @@ func (h *MessagesHandler) handleStreaming(
 				if wireFormat == core.WireFormatAnthropic {
 					atomic.StoreInt32(&heartbeatPaused, 1)
 				}
-				errProxy := h.streamProxy.ProxyStream(rw, streamReader, wireFormat, model.ModelID, attemptCtx, idleTimeout, cancelAttempt)
+				errProxy := h.streamProxy.ProxyStream(rw, streamReader, wireFormat, requestedModel, attemptCtx, idleTimeout, cancelAttempt)
 				if wireFormat == core.WireFormatAnthropic {
 					atomic.StoreInt32(&heartbeatPaused, 0)
 				}
@@ -926,7 +927,7 @@ func (h *MessagesHandler) handleStreaming(
 		// Bind body read to attemptCtx so streaming_timeout_ms aborts mid-stream.
 		streamReader := transformer.NewCtxReadCloser(attemptCtx, streamBody)
 
-		if err := h.streamHandler.ProxyStream(rw, streamReader, model.ModelID, attemptCtx, idleTimeout, cancelAttempt); err != nil {
+		if err := h.streamHandler.ProxyStream(rw, streamReader, requestedModel, attemptCtx, idleTimeout, cancelAttempt); err != nil {
 			if err == transformer.ErrClientDisconnected {
 				if clientCtx.Err() != nil {
 					h.logger.Debug("client disconnected during stream")
@@ -1210,6 +1211,7 @@ func (h *MessagesHandler) handleNonStreaming(
 	scenario router.Scenario,
 	requestID string,
 	userID string,
+	requestedModel string,
 ) {
 	ctx := r.Context()
 	startTime := time.Now()
@@ -1229,6 +1231,12 @@ func (h *MessagesHandler) handleNonStreaming(
 					if execErr != nil {
 						return nil, execErr
 					}
+					// Provider returns the upstream's model name in the body
+					// (e.g. "deepseek-v4-flash"); rewrite to the client's
+					// requested name so Claude Code can resume sessions.
+					if requestedModel != "" {
+						execResult.Body = rewriteResponseModel(execResult.Body, requestedModel)
+					}
 					return execResult.Body, nil
 				}
 			}
@@ -1244,22 +1252,22 @@ func (h *MessagesHandler) handleNonStreaming(
 					if model.AnthropicToolsDisabled {
 						// Fall through to OpenAI-compatible handling below.
 					} else {
-						return h.executeAnthropicRequest(attemptCtx, replaceModelInRawBody(rawBody, model.ModelID), model)
+						return h.executeAnthropicRequest(attemptCtx, replaceModelInRawBody(rawBody, model.ModelID), model, requestedModel)
 					}
 				case client.EndpointResponses:
-					return h.executeResponsesRequest(attemptCtx, anthropicReq, model)
+					return h.executeResponsesRequest(attemptCtx, anthropicReq, model, requestedModel)
 				case client.EndpointGemini:
-					return h.executeGeminiRequest(attemptCtx, anthropicReq, model)
+					return h.executeGeminiRequest(attemptCtx, anthropicReq, model, requestedModel)
 				default:
 					// Fall through to OpenAI-compatible handling
 				}
 			} else if client.IsAnthropicModel(model.ModelID) {
 				// Go provider Anthropic-native models (MiniMax, Qwen)
-				return h.executeAnthropicRequest(attemptCtx, replaceModelInRawBody(rawBody, model.ModelID), model)
+				return h.executeAnthropicRequest(attemptCtx, replaceModelInRawBody(rawBody, model.ModelID), model, requestedModel)
 			}
 
 			// OpenAI-compatible models (both Go and Zen)
-			return h.executeOpenAIRequest(attemptCtx, anthropicReq, model)
+			return h.executeOpenAIRequest(attemptCtx, anthropicReq, model, requestedModel)
 		},
 	)
 
@@ -1329,10 +1337,18 @@ func (h *MessagesHandler) handleNonStreaming(
 }
 
 // executeAnthropicRequest executes a request to the Anthropic endpoint (for MiniMax models).
+//
+// `requestedModel` is what the client (Claude Code) sent in `model:`. The
+// upstream Anthropic endpoint will return its own model name (e.g.
+// `minimax/MiniMax-M3`) in the response body. Claude Code keys session
+// resumption off the `model` field it sees, so we rewrite the response to
+// claim the requested model — otherwise Claude Code warns "Session model X
+// could not be restored" and falls back to sonnet on the next turn.
 func (h *MessagesHandler) executeAnthropicRequest(
 	ctx context.Context,
 	rawBody json.RawMessage,
 	model config.ModelConfig,
+	requestedModel string,
 ) ([]byte, error) {
 	// Sanitize Anthropic-specific fields (e.g., tool type shorthands) that
 	// upstream models may not understand.
@@ -1349,16 +1365,51 @@ func (h *MessagesHandler) executeAnthropicRequest(
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
+	if requestedModel != "" {
+		body = rewriteResponseModel(body, requestedModel)
+	}
+
 	h.logger.Debug("anthropic response", "body", string(body))
 
 	return body, nil
 }
 
+// rewriteResponseModel sets the top-level `model` field on an Anthropic JSON
+// response body. Cheap JSON rewrite — no need to round-trip through types.
+func rewriteResponseModel(body []byte, requestedModel string) []byte {
+	var resp map[string]json.RawMessage
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return body
+	}
+	if _, ok := resp["model"]; !ok {
+		return body
+	}
+	resp["model"] = json.RawMessage(quoteJSONString(requestedModel))
+	out, err := json.Marshal(resp)
+	if err != nil {
+		return body
+	}
+	return out
+}
+
+// quoteJSONString returns the JSON-encoded form of a string value (including
+// the surrounding quotes), suitable for json.RawMessage substitution.
+func quoteJSONString(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
+}
+
 // executeOpenAIRequest executes a request to the OpenAI endpoint with transformation.
+//
+// `requestedModel` is what the client sent in `model:` — Claude Code keys
+// session resumption off the response's `model` field, so we report the
+// requested name (not the upstream's actual model) so existing sessions
+// can resume cleanly when the proxy family-overrides the upstream choice.
 func (h *MessagesHandler) executeOpenAIRequest(
 	ctx context.Context,
 	anthropicReq *types.MessageRequest,
 	model config.ModelConfig,
+	requestedModel string,
 ) ([]byte, error) {
 	openaiReq, err := h.requestTransformer.TransformRequest(anthropicReq, model)
 	if err != nil {
@@ -1370,7 +1421,11 @@ func (h *MessagesHandler) executeOpenAIRequest(
 		return nil, fmt.Errorf("chat completion failed: %w", err)
 	}
 
-	anthropicResp, err := h.responseTransformer.TransformResponse(resp, model.ModelID)
+	respModel := requestedModel
+	if respModel == "" {
+		respModel = model.ModelID
+	}
+	anthropicResp, err := h.responseTransformer.TransformResponse(resp, respModel)
 	if err != nil {
 		return nil, fmt.Errorf("response transform failed: %w", err)
 	}
@@ -1383,6 +1438,7 @@ func (h *MessagesHandler) executeResponsesRequest(
 	ctx context.Context,
 	anthropicReq *types.MessageRequest,
 	model config.ModelConfig,
+	requestedModel string,
 ) ([]byte, error) {
 	req, err := h.requestTransformer.TransformToResponses(anthropicReq, model)
 	if err != nil {
@@ -1394,7 +1450,11 @@ func (h *MessagesHandler) executeResponsesRequest(
 		return nil, fmt.Errorf("responses completion failed: %w", err)
 	}
 
-	anthropicResp, err := h.responseTransformer.TransformResponsesResponse(resp, model.ModelID)
+	respModel := requestedModel
+	if respModel == "" {
+		respModel = model.ModelID
+	}
+	anthropicResp, err := h.responseTransformer.TransformResponsesResponse(resp, respModel)
 	if err != nil {
 		return nil, fmt.Errorf("response transform failed: %w", err)
 	}
@@ -1407,6 +1467,7 @@ func (h *MessagesHandler) executeGeminiRequest(
 	ctx context.Context,
 	anthropicReq *types.MessageRequest,
 	model config.ModelConfig,
+	requestedModel string,
 ) ([]byte, error) {
 	req, err := h.requestTransformer.TransformToGemini(anthropicReq, model)
 	if err != nil {
@@ -1418,7 +1479,11 @@ func (h *MessagesHandler) executeGeminiRequest(
 		return nil, fmt.Errorf("gemini completion failed: %w", err)
 	}
 
-	anthropicResp, err := h.responseTransformer.TransformGeminiResponse(resp, model.ModelID)
+	respModel := requestedModel
+	if respModel == "" {
+		respModel = model.ModelID
+	}
+	anthropicResp, err := h.responseTransformer.TransformGeminiResponse(resp, respModel)
 	if err != nil {
 		return nil, fmt.Errorf("response transform failed: %w", err)
 	}

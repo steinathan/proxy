@@ -476,7 +476,7 @@ func TestHandleStreaming_UsageLimitSkipsRemainingProviderModels(t *testing.T) {
 	stream := true
 	req := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
 	rec := httptest.NewRecorder()
-	h.handleStreaming(rec,
+h.handleStreaming(rec,
 		req,
 		&types.MessageRequest{Stream: &stream},
 		&core.NormalizedRequest{Stream: true},
@@ -489,7 +489,8 @@ func TestHandleStreaming_UsageLimitSkipsRemainingProviderModels(t *testing.T) {
 		router.ScenarioDefault,
 		"",
 		"",
-		)
+		"",
+	)
 	if goCalls != 1 || zenCalls != 1 {
 		t.Fatalf("goCalls=%d zenCalls=%d; want 1 each", goCalls, zenCalls)
 	}
@@ -737,7 +738,8 @@ func TestHandleStreaming_GoAnthropicModel_SendsRawAnthropicBody(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")
+		"",
+			"")
 	if len(capturedBody) == 0 {
 		t.Fatal("upstream received no body")
 	}
@@ -839,7 +841,8 @@ func TestHandleStreaming_GoAnthropicModel_FallsThroughOnError(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")
+		"",
+			"")
 	finalCount := atomic.LoadInt32(&callCount)
 	if finalCount != 2 {
 		t.Fatalf("expected 2 upstream calls (1 fail + 1 success), got %d", finalCount)
@@ -1353,7 +1356,8 @@ func TestHandleStreaming_ConfigurableTimeout(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")	}()
+		"",
+			"")	}()
 
 	select {
 	case <-done:
@@ -1412,7 +1416,8 @@ func TestHandleStreaming_ClientContextCanceled_StopsFallback(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")	}()
+		"",
+			"")	}()
 
 	select {
 	case <-done:
@@ -1476,7 +1481,8 @@ func TestHandleStreaming_ClientDisconnectsDuringStream_StopsFallback(t *testing.
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")	}()
+		"",
+			"")	}()
 
 	time.Sleep(100 * time.Millisecond)
 	cancel()
@@ -1561,7 +1567,8 @@ func TestHandleStreaming_PerModelTimeoutFallback(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")	}()
+		"",
+			"")	}()
 
 	select {
 	case <-done:
@@ -1941,7 +1948,8 @@ func TestHandleStreaming_AnthropicRaw_NoKeepaliveInjection(t *testing.T) {
 		rawBody,
 		router.Scenario(""),
 		"",
-		"")	}()
+		"",
+			"")	}()
 
 	time.Sleep(1000 * time.Millisecond)
 	close(blockCh)
