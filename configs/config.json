@@ -416,11 +416,25 @@
       "max_tokens": 8192,
       "vision": true
     },
+    "claude-opus-5": {
+      "provider": "kie_claude_opus5",
+      "model_id": "claude-opus-5",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
     "claude-sonnet-4-6": {
       "provider": "kie_claude_sonnet46",
       "model_id": "claude-sonnet-4-6",
       "temperature": 0.7,
       "max_tokens": 4096
+    },
+    "claude-sonnet-5": {
+      "provider": "kie_claude_sonnet5",
+      "model_id": "claude-sonnet-5",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
     },
     "claude-haiku-4-5": {
       "provider": "kie_claude_haiku45",
@@ -445,17 +459,18 @@
   },
   "model_family_overrides": {
     "opus": {
-      "provider": "minimax",
-      "model_id": "MiniMax-M3",
+      "provider": "kie_claude_opus5",
+      "model_id": "claude-opus-5",
       "temperature": 0.7,
       "max_tokens": 8192,
       "vision": true
     },
     "sonnet": {
-      "provider": "opencode-go",
-      "model_id": "deepseek-v4-flash",
+      "provider": "kie_claude_sonnet5",
+      "model_id": "claude-sonnet-5",
       "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 8192,
+      "vision": true
     },
     "haiku": {
       "provider": "qwen",
