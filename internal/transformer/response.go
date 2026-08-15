@@ -47,6 +47,7 @@ func (t *ResponseTransformer) TransformResponse(
 	stopReason := t.mapFinishReason(choice.FinishReason)
 
 	// Build Anthropic response.
+	cacheHit := openaiResp.Usage.EffectiveCacheHitTokens()
 	anthropicResp := &types.MessageResponse{
 		ID:           openaiResp.ID,
 		Type:         "message",
@@ -64,10 +65,10 @@ func (t *ResponseTransformer) TransformResponse(
 			// them out, otherwise Claude Code's local context counter sees an
 			// inflated input_tokens on every turn and trips auto-compact ~5x
 			// too early on long-prefix sessions.
-			InputTokens:              nonNegative(openaiResp.Usage.PromptTokens - openaiResp.Usage.PromptCacheHitTokens - openaiResp.Usage.PromptCacheMissTokens),
+			InputTokens:              nonNegative(openaiResp.Usage.PromptTokens - cacheHit - openaiResp.Usage.PromptCacheMissTokens),
 			OutputTokens:             openaiResp.Usage.CompletionTokens,
 			CacheCreationInputTokens: openaiResp.Usage.PromptCacheMissTokens,
-			CacheReadInputTokens:     openaiResp.Usage.PromptCacheHitTokens,
+			CacheReadInputTokens:     cacheHit,
 		},
 	}
 

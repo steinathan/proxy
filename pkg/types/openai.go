@@ -133,13 +133,34 @@ type Choice struct {
 	Delta        ChatMessage `json:"delta,omitempty"`
 }
 
+// PromptTokensDetails carries the OpenAI-standard cache breakdown nested under
+// usage.prompt_tokens_details. Providers that do not expose the Bedrock-style
+// prompt_cache_hit_tokens/prompt_cache_miss_tokens top-level keys (OpenAI,
+// MiniMax, OpenRouter, many others) report cache reads here.
+type PromptTokensDetails struct {
+	CachedTokens int `json:"cached_tokens,omitempty"`
+}
+
 // UsageInfo represents token usage information.
 type UsageInfo struct {
-	PromptTokens          int `json:"prompt_tokens"`
-	CompletionTokens      int `json:"completion_tokens"`
-	TotalTokens           int `json:"total_tokens"`
-	PromptCacheHitTokens  int `json:"prompt_cache_hit_tokens,omitempty"`
-	PromptCacheMissTokens int `json:"prompt_cache_miss_tokens,omitempty"`
+	PromptTokens          int                 `json:"prompt_tokens"`
+	CompletionTokens      int                 `json:"completion_tokens"`
+	TotalTokens           int                 `json:"total_tokens"`
+	PromptCacheHitTokens  int                 `json:"prompt_cache_hit_tokens,omitempty"`
+	PromptCacheMissTokens int                 `json:"prompt_cache_miss_tokens,omitempty"`
+	Details               PromptTokensDetails `json:"prompt_tokens_details,omitempty"`
+}
+
+// EffectiveCacheHitTokens returns the cache-read token count for this usage,
+// preferring the Bedrock-style prompt_cache_hit_tokens field and falling back
+// to the OpenAI-standard prompt_tokens_details.cached_tokens. Callers must
+// subtract this from PromptTokens before exposing input_tokens, or a
+// cache-heavy session is billed as full fresh input.
+func (u *UsageInfo) EffectiveCacheHitTokens() int {
+	if u.PromptCacheHitTokens > 0 {
+		return u.PromptCacheHitTokens
+	}
+	return u.Details.CachedTokens
 }
 
 // ChatCompletionChunk represents a streaming chunk from the Chat Completions API.

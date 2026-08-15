@@ -1,0 +1,746 @@
+{
+  "api_key": "${ROUTATIC_PROXY_API_KEY}",
+  "host": "127.0.0.1",
+  "port": 3456,
+  "hot_reload": true,
+  "enable_streaming_scenario_routing": false,
+  "respect_requested_model": false,
+  "models": {
+    "background": {
+      "provider": "qwen",
+      "model_id": "qwen-plus",
+      "temperature": 0.5,
+      "max_tokens": 2048
+    },
+    "default": {
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "long_context": {
+      "provider": "minimax",
+      "model_id": "MiniMax-M3",
+      "temperature": 0.7,
+      "max_tokens": 16384,
+      "context_threshold": 80000,
+      "vision": true
+    },
+    "think": {
+      "provider": "glm",
+      "model_id": "glm-4.6",
+      "temperature": 0.7,
+      "max_tokens": 8192
+    },
+    "complex": {
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "fast": {
+      "provider": "groq",
+      "model_id": "llama-3.3-70b-versatile",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "vision": {
+      "provider": "opencode-go",
+      "model_id": "mimo-v2.5",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "vision_complex": {
+      "provider": "opencode-go",
+      "model_id": "mimo-v2.5",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "vision_long_context": {
+      "provider": "opencode-go",
+      "model_id": "mimo-v2.5",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    }
+  },
+  "fallbacks": {
+    "background": [
+      {
+        "provider": "qwen",
+        "model_id": "qwen-plus"
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "siliconflow",
+        "model_id": "Qwen/Qwen2.5-7B-Instruct"
+      },
+      {
+        "provider": "groq",
+        "model_id": "llama-3.1-8b-instant"
+      },
+      {
+        "provider": "cerebras",
+        "model_id": "llama-3.3-70b"
+      },
+      {
+        "provider": "kie_gemini25flash",
+        "model_id": "gemini-2-5-flash",
+        "vision": true
+      },
+      {
+        "provider": "kie_grok43",
+        "model_id": "grok-4-3"
+      },
+      {
+        "provider": "mimo_free",
+        "model_id": "mimo-v2.5"
+      }
+    ],
+    "default": [
+      {
+        "provider": "opencode-go",
+        "model_id": "deepseek-v4-flash"
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "kie_claude_sonnet46",
+        "model_id": "claude-sonnet-4-6"
+      },
+      {
+        "provider": "qwen",
+        "model_id": "qwen-max"
+      },
+      {
+        "provider": "glm",
+        "model_id": "glm-4.6"
+      },
+      {
+        "provider": "kimi",
+        "model_id": "moonshot-v1-128k",
+        "vision": true
+      },
+      {
+        "provider": "kie_gpt52",
+        "model_id": "gpt-5-2"
+      },
+      {
+        "provider": "kie_gemini25pro",
+        "model_id": "gemini-2-5-pro"
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "deepseek/deepseek-chat"
+      },
+      {
+        "provider": "groq",
+        "model_id": "llama-3.3-70b-versatile"
+      }
+    ],
+    "long_context": [
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "kimi",
+        "model_id": "moonshot-v1-128k",
+        "vision": true
+      },
+      {
+        "provider": "siliconflow",
+        "model_id": "Qwen/Qwen2.5-72B-Instruct"
+      },
+      {
+        "provider": "kie_gemini31pro",
+        "model_id": "gemini-3-1-pro",
+        "vision": true
+      },
+      {
+        "provider": "kie_gemini25pro",
+        "model_id": "gemini-2-5-pro"
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "google/gemini-2.5-pro",
+        "vision": true
+      }
+    ],
+    "think": [
+      {
+        "provider": "glm",
+        "model_id": "glm-4.6"
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "deepseek",
+        "model_id": "deepseek-reasoner"
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "qwen",
+        "model_id": "qwq-32b-preview"
+      },
+      {
+        "provider": "kie_claude_opus48",
+        "model_id": "claude-opus-4-8"
+      },
+      {
+        "provider": "kie_grok45",
+        "model_id": "grok-4-5"
+      }
+    ],
+    "complex": [
+      {
+        "provider": "opencode-go",
+        "model_id": "deepseek-v4-flash"
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "kie_claude_opus5",
+        "model_id": "claude-opus-5"
+      },
+      {
+        "provider": "kie_claude_opus48",
+        "model_id": "claude-opus-4-8"
+      },
+      {
+        "provider": "glm",
+        "model_id": "glm-4.6"
+      },
+      {
+        "provider": "kimi",
+        "model_id": "moonshot-v1-128k",
+        "vision": true
+      },
+      {
+        "provider": "together",
+        "model_id": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+      }
+    ],
+    "fast": [
+      {
+        "provider": "groq",
+        "model_id": "llama-3.3-70b-versatile"
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "deepseek-v4-flash"
+      },
+      {
+        "provider": "cerebras",
+        "model_id": "llama-3.3-70b"
+      },
+      {
+        "provider": "qwen",
+        "model_id": "qwen-turbo"
+      },
+      {
+        "provider": "kie_claude_haiku45",
+        "model_id": "claude-haiku-4-5"
+      },
+      {
+        "provider": "kie_gpt52",
+        "model_id": "gpt-5-2"
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "meta-llama/llama-3.3-70b-instruct:free"
+      }
+    ],
+    "vision": [
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "qwen",
+        "model_id": "qwen-vl-max",
+        "vision": true
+      },
+      {
+        "provider": "kie_gemini25flash",
+        "model_id": "gemini-2-5-flash",
+        "vision": true
+      },
+      {
+        "provider": "kie_gpt52",
+        "model_id": "gpt-5-2"
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "google/gemini-2.5-flash",
+        "vision": true
+      },
+      {
+        "provider": "gemini_free",
+        "model_id": "gemini-2.0-flash",
+        "vision": true
+      }
+    ],
+    "vision_complex": [
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "kie_gemini31pro",
+        "model_id": "gemini-3-1-pro",
+        "vision": true
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "google/gemini-2.5-pro",
+        "vision": true
+      },
+      {
+        "provider": "qwen",
+        "model_id": "qwen-vl-max",
+        "vision": true
+      }
+    ],
+    "vision_long_context": [
+      {
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "vision": true
+      },
+      {
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
+        "vision": true
+      },
+      {
+        "provider": "kie_gemini31pro",
+        "model_id": "gemini-3-1-pro",
+        "vision": true
+      },
+      {
+        "provider": "openrouter",
+        "model_id": "google/gemini-2.5-pro",
+        "vision": true
+      },
+      {
+        "provider": "kimi",
+        "model_id": "moonshot-v1-128k",
+        "vision": true
+      }
+    ]
+  },
+  "model_overrides": {
+    "deepseek-v4-flash": {
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "mimo-v2.5": {
+      "provider": "opencode-go",
+      "model_id": "mimo-v2.5",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "deepseek-chat": {
+      "provider": "deepseek",
+      "model_id": "deepseek-chat",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "glm-4.6": {
+      "provider": "glm",
+      "model_id": "glm-4.6",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "qwen-plus": {
+      "provider": "qwen",
+      "model_id": "qwen-plus",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "gpt-5-2": {
+      "provider": "kie_gpt52",
+      "model_id": "gpt-5-2",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "claude-opus-4-8": {
+      "provider": "kie_claude_opus48",
+      "model_id": "claude-opus-4-8",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "claude-sonnet-4-6": {
+      "provider": "kie_claude_sonnet46",
+      "model_id": "claude-sonnet-4-6",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "claude-haiku-4-5": {
+      "provider": "kie_claude_haiku45",
+      "model_id": "claude-haiku-4-5",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "gemini-2-5-pro": {
+      "provider": "kie_gemini25pro",
+      "model_id": "gemini-2-5-pro",
+      "temperature": 0.7,
+      "max_tokens": 4096,
+      "vision": true
+    },
+    "gemini-2-5-flash": {
+      "provider": "kie_gemini25flash",
+      "model_id": "gemini-2-5-flash",
+      "temperature": 0.7,
+      "max_tokens": 4096,
+      "vision": true
+    }
+  },
+  "model_family_overrides": {
+    "opus": {
+      "provider": "minimax",
+      "model_id": "MiniMax-M3",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "sonnet": {
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "haiku": {
+      "provider": "qwen",
+      "model_id": "qwen-turbo",
+      "temperature": 0.7,
+      "max_tokens": 4096
+    }
+  },
+  "minimax": {
+    "base_url": "https://api.minimax.io/anthropic/v1/messages",
+    "api_keys": [
+      "${ROUTATIC_PROXY_MINIMAX_API_KEY}"
+    ],
+    "timeout_ms": 300000,
+    "stream_timeout_ms": 60000
+  },
+  "opencode_go": {
+    "base_url": "https://opencode.ai/zen/go/v1/chat/completions",
+    "anthropic_base_url": "https://opencode.ai/zen/go/v1/messages",
+    "api_keys": [
+      "${ROUTATIC_PROXY_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "opencode_zen": {
+    "base_url": "https://opencode.ai/zen/v1/chat/completions",
+    "anthropic_base_url": "https://opencode.ai/zen/v1/messages",
+    "responses_base_url": "https://opencode.ai/zen/v1/responses",
+    "gemini_base_url": "https://opencode.ai/zen/v1/models",
+    "api_keys": [
+      "${ROUTATIC_PROXY_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "mimo_free": {
+    "base_url": "https://api.xiaomimimo.com/v1/chat/completions",
+    "api_keys": [
+      ""
+    ],
+    "timeout_ms": 300000,
+    "no_auth": true
+  },
+  "huggingchat": {
+    "base_url": "https://hcapi.huggingface.co/v1/chat/completions",
+    "api_keys": [
+      ""
+    ],
+    "timeout_ms": 300000,
+    "no_auth": true
+  },
+  "groq": {
+    "base_url": "https://api.groq.com/openai/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_GROQ_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "cerebras": {
+    "base_url": "https://api.cerebras.ai/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_CEREBRAS_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "cloudflare": {
+    "base_url": "https://api.cloudflare.com/client/v4/accounts/${ROUTATIC_PROXY_CF_ACCOUNT_ID}/ai/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_CLOUDFLARE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "nvidia_nim": {
+    "base_url": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_NVIDIA_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "github_models": {
+    "base_url": "https://models.inference.ai.azure.com/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_GITHUB_MODELS_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "gemini_free": {
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_GEMINI_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "deepseek": {
+    "base_url": "https://api.deepseek.com/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_DEEPSEEK_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "siliconflow": {
+    "base_url": "https://api.siliconflow.cn/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_SILICONFLOW_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "glm": {
+    "base_url": "https://api.z.ai/api/paas/v4/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_GLM_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kimi": {
+    "base_url": "https://api.moonshot.cn/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIMI_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "qwen": {
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_QWEN_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "stepfun": {
+    "base_url": "https://api.stepfun.com/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_STEPFUN_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "doubao": {
+    "base_url": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_DOUBAO_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "openrouter": {
+    "base_url": "https://openrouter.ai/api/v1/chat/completions",
+    "anthropic_base_url": "https://openrouter.ai/api/v1/messages",
+    "responses_base_url": "https://openrouter.ai/api/v1/responses",
+    "api_keys": [
+      "${ROUTATIC_PROXY_OPENROUTER_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "together": {
+    "base_url": "https://api.together.xyz/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_TOGETHER_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "fireworks": {
+    "base_url": "https://api.fireworks.ai/inference/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_FIREWORKS_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "nebius": {
+    "base_url": "https://studio.nebius.ai/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_NEBIUS_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "deepinfra": {
+    "base_url": "https://api.deepinfra.com/v1/openai/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_DEEPINFRA_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "hyperbolic": {
+    "base_url": "https://api.hyperbolic.xyz/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_HYPERBOLIC_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "sambanova": {
+    "base_url": "https://api.sambanova.ai/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_SAMBANOVA_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gpt52": {
+    "base_url": "https://api.kie.ai/gpt-5-2/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gpt54": {
+    "base_url": "https://api.kie.ai/gpt-5-4/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gpt55": {
+    "base_url": "https://api.kie.ai/gpt-5-5/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_claude_opus5": {
+    "base_url": "https://api.kie.ai/claude-opus-5/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_claude_opus48": {
+    "base_url": "https://api.kie.ai/claude-opus-4-8/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_claude_sonnet5": {
+    "base_url": "https://api.kie.ai/claude-sonnet-5/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_claude_sonnet46": {
+    "base_url": "https://api.kie.ai/claude-sonnet-4-6/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_claude_haiku45": {
+    "base_url": "https://api.kie.ai/claude-haiku-4-5/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gemini31pro": {
+    "base_url": "https://api.kie.ai/gemini-3-1-pro/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gemini25pro": {
+    "base_url": "https://api.kie.ai/gemini-2-5-pro/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_gemini25flash": {
+    "base_url": "https://api.kie.ai/gemini-2-5-flash/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_grok45": {
+    "base_url": "https://api.kie.ai/grok-4-5/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "kie_grok43": {
+    "base_url": "https://api.kie.ai/grok-4-3/v1/chat/completions",
+    "api_keys": [
+      "${ROUTATIC_PROXY_KIE_API_KEY}"
+    ],
+    "timeout_ms": 300000
+  },
+  "logging": {
+    "level": "debug",
+    "requests": true
+  }
+}
