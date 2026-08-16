@@ -90,15 +90,6 @@
         "model_id": "llama-3.3-70b"
       },
       {
-        "provider": "kie_gemini25flash",
-        "model_id": "gemini-2-5-flash",
-        "vision": true
-      },
-      {
-        "provider": "kie_grok43",
-        "model_id": "grok-4-3"
-      },
-      {
         "provider": "mimo_free",
         "model_id": "mimo-v2.5"
       }
@@ -119,10 +110,6 @@
         "vision": true
       },
       {
-        "provider": "kie_claude_sonnet46",
-        "model_id": "claude-sonnet-4-6"
-      },
-      {
         "provider": "qwen",
         "model_id": "qwen-max"
       },
@@ -134,14 +121,6 @@
         "provider": "kimi",
         "model_id": "moonshot-v1-128k",
         "vision": true
-      },
-      {
-        "provider": "kie_gpt52",
-        "model_id": "gpt-5-2"
-      },
-      {
-        "provider": "kie_gemini25pro",
-        "model_id": "gemini-2-5-pro"
       },
       {
         "provider": "openrouter",
@@ -173,15 +152,6 @@
         "model_id": "Qwen/Qwen2.5-72B-Instruct"
       },
       {
-        "provider": "kie_gemini31pro",
-        "model_id": "gemini-3-1-pro",
-        "vision": true
-      },
-      {
-        "provider": "kie_gemini25pro",
-        "model_id": "gemini-2-5-pro"
-      },
-      {
         "provider": "openrouter",
         "model_id": "google/gemini-2.5-pro",
         "vision": true
@@ -209,14 +179,6 @@
       {
         "provider": "qwen",
         "model_id": "qwq-32b-preview"
-      },
-      {
-        "provider": "kie_claude_opus48",
-        "model_id": "claude-opus-4-8"
-      },
-      {
-        "provider": "kie_grok45",
-        "model_id": "grok-4-5"
       }
     ],
     "complex": [
@@ -228,14 +190,6 @@
         "provider": "minimax",
         "model_id": "MiniMax-M3",
         "vision": true
-      },
-      {
-        "provider": "kie_claude_opus5",
-        "model_id": "claude-opus-5"
-      },
-      {
-        "provider": "kie_claude_opus48",
-        "model_id": "claude-opus-4-8"
       },
       {
         "provider": "glm",
@@ -269,14 +223,6 @@
         "model_id": "qwen-turbo"
       },
       {
-        "provider": "kie_claude_haiku45",
-        "model_id": "claude-haiku-4-5"
-      },
-      {
-        "provider": "kie_gpt52",
-        "model_id": "gpt-5-2"
-      },
-      {
         "provider": "openrouter",
         "model_id": "meta-llama/llama-3.3-70b-instruct:free"
       }
@@ -296,15 +242,6 @@
         "provider": "qwen",
         "model_id": "qwen-vl-max",
         "vision": true
-      },
-      {
-        "provider": "kie_gemini25flash",
-        "model_id": "gemini-2-5-flash",
-        "vision": true
-      },
-      {
-        "provider": "kie_gpt52",
-        "model_id": "gpt-5-2"
       },
       {
         "provider": "openrouter",
@@ -329,11 +266,6 @@
         "vision": true
       },
       {
-        "provider": "kie_gemini31pro",
-        "model_id": "gemini-3-1-pro",
-        "vision": true
-      },
-      {
         "provider": "openrouter",
         "model_id": "google/gemini-2.5-pro",
         "vision": true
@@ -353,11 +285,6 @@
       {
         "provider": "minimax",
         "model_id": "MiniMax-M3",
-        "vision": true
-      },
-      {
-        "provider": "kie_gemini31pro",
-        "model_id": "gemini-3-1-pro",
         "vision": true
       },
       {
@@ -402,76 +329,9 @@
       "model_id": "qwen-plus",
       "temperature": 0.7,
       "max_tokens": 4096
-    },
-    "gpt-5-2": {
-      "provider": "kie_gpt52",
-      "model_id": "gpt-5-2",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "claude-opus-4-8": {
-      "provider": "kie_claude_opus48",
-      "model_id": "claude-opus-4-8",
-      "temperature": 0.7,
-      "max_tokens": 8192,
-      "vision": true
-    },
-    "claude-opus-5": {
-      "provider": "kie_claude_opus5",
-      "model_id": "claude-opus-5",
-      "temperature": 0.7,
-      "max_tokens": 8192,
-      "vision": true
-    },
-    "claude-sonnet-4-6": {
-      "provider": "kie_claude_sonnet46",
-      "model_id": "claude-sonnet-4-6",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "claude-sonnet-5": {
-      "provider": "kie_claude_sonnet5",
-      "model_id": "claude-sonnet-5",
-      "temperature": 0.7,
-      "max_tokens": 8192,
-      "vision": true
-    },
-    "claude-haiku-4-5": {
-      "provider": "kie_claude_haiku45",
-      "model_id": "claude-haiku-4-5",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "gemini-2-5-pro": {
-      "provider": "kie_gemini25pro",
-      "model_id": "gemini-2-5-pro",
-      "temperature": 0.7,
-      "max_tokens": 4096,
-      "vision": true
-    },
-    "gemini-2-5-flash": {
-      "provider": "kie_gemini25flash",
-      "model_id": "gemini-2-5-flash",
-      "temperature": 0.7,
-      "max_tokens": 4096,
-      "vision": true
     }
   },
   "model_family_overrides": {
-    "opus": {
-      "provider": "kie_claude_opus5",
-      "model_id": "claude-opus-5",
-      "temperature": 0.7,
-      "max_tokens": 8192,
-      "vision": true
-    },
-    "sonnet": {
-      "provider": "kie_claude_sonnet5",
-      "model_id": "claude-sonnet-5",
-      "temperature": 0.7,
-      "max_tokens": 8192,
-      "vision": true
-    },
     "haiku": {
       "provider": "qwen",
       "model_id": "qwen-turbo",
@@ -660,97 +520,6 @@
     "base_url": "https://api.sambanova.ai/v1/chat/completions",
     "api_keys": [
       "${ROUTATIC_PROXY_SAMBANOVA_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gpt52": {
-    "base_url": "https://api.kie.ai/gpt-5-2/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gpt54": {
-    "base_url": "https://api.kie.ai/gpt-5-4/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gpt55": {
-    "base_url": "https://api.kie.ai/gpt-5-5/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_claude_opus5": {
-    "base_url": "https://api.kie.ai/claude-opus-5/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_claude_opus48": {
-    "base_url": "https://api.kie.ai/claude-opus-4-8/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_claude_sonnet5": {
-    "base_url": "https://api.kie.ai/claude-sonnet-5/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_claude_sonnet46": {
-    "base_url": "https://api.kie.ai/claude-sonnet-4-6/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_claude_haiku45": {
-    "base_url": "https://api.kie.ai/claude-haiku-4-5/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gemini31pro": {
-    "base_url": "https://api.kie.ai/gemini-3-1-pro/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gemini25pro": {
-    "base_url": "https://api.kie.ai/gemini-2-5-pro/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_gemini25flash": {
-    "base_url": "https://api.kie.ai/gemini-2-5-flash/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_grok45": {
-    "base_url": "https://api.kie.ai/grok-4-5/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kie_grok43": {
-    "base_url": "https://api.kie.ai/grok-4-3/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIE_API_KEY}"
     ],
     "timeout_ms": 300000
   },
