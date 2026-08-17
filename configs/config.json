@@ -7,8 +7,8 @@
   "respect_requested_model": false,
   "models": {
     "background": {
-      "provider": "qwen",
-      "model_id": "qwen-plus",
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
       "temperature": 0.5,
       "max_tokens": 2048
     },
@@ -27,8 +27,8 @@
       "vision": true
     },
     "think": {
-      "provider": "glm",
-      "model_id": "glm-4.6",
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
       "temperature": 0.7,
       "max_tokens": 8192
     },
@@ -39,8 +39,8 @@
       "max_tokens": 4096
     },
     "fast": {
-      "provider": "groq",
-      "model_id": "llama-3.3-70b-versatile",
+      "provider": "opencode-go",
+      "model_id": "deepseek-v4-flash",
       "temperature": 0.7,
       "max_tokens": 4096
     },
@@ -69,87 +69,61 @@
   "fallbacks": {
     "background": [
       {
-        "provider": "qwen",
-        "model_id": "qwen-plus"
-      },
-      {
         "provider": "opencode-go",
         "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
         "vision": true
       },
       {
-        "provider": "siliconflow",
-        "model_id": "Qwen/Qwen2.5-7B-Instruct"
-      },
-      {
-        "provider": "groq",
-        "model_id": "llama-3.1-8b-instant"
-      },
-      {
-        "provider": "cerebras",
-        "model_id": "llama-3.3-70b"
-      },
-      {
-        "provider": "mimo_free",
-        "model_id": "mimo-v2.5"
+        "provider": "opencode-go",
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       }
     ],
     "default": [
       {
         "provider": "opencode-go",
-        "model_id": "deepseek-v4-flash"
+        "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "vision": true
       },
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "vision": true
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       },
       {
         "provider": "minimax",
         "model_id": "MiniMax-M3",
-        "vision": true
-      },
-      {
-        "provider": "qwen",
-        "model_id": "qwen-max"
-      },
-      {
-        "provider": "glm",
-        "model_id": "glm-4.6"
-      },
-      {
-        "provider": "kimi",
-        "model_id": "moonshot-v1-128k",
         "vision": true
       },
       {
         "provider": "openrouter",
         "model_id": "deepseek/deepseek-chat"
-      },
-      {
-        "provider": "groq",
-        "model_id": "llama-3.3-70b-versatile"
       }
     ],
     "long_context": [
       {
-        "provider": "minimax",
-        "model_id": "MiniMax-M3",
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
         "vision": true
       },
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "vision": true
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       },
       {
-        "provider": "kimi",
-        "model_id": "moonshot-v1-128k",
+        "provider": "minimax",
+        "model_id": "MiniMax-M3",
         "vision": true
-      },
-      {
-        "provider": "siliconflow",
-        "model_id": "Qwen/Qwen2.5-72B-Instruct"
       },
       {
         "provider": "openrouter",
@@ -159,13 +133,17 @@
     ],
     "think": [
       {
-        "provider": "glm",
-        "model_id": "glm-4.6"
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "vision": true
       },
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "vision": true
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       },
       {
         "provider": "deepseek",
@@ -175,56 +153,41 @@
         "provider": "minimax",
         "model_id": "MiniMax-M3",
         "vision": true
-      },
-      {
-        "provider": "qwen",
-        "model_id": "qwq-32b-preview"
       }
     ],
     "complex": [
       {
         "provider": "opencode-go",
-        "model_id": "deepseek-v4-flash"
+        "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "vision": true
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       },
       {
         "provider": "minimax",
         "model_id": "MiniMax-M3",
         "vision": true
-      },
-      {
-        "provider": "glm",
-        "model_id": "glm-4.6"
-      },
-      {
-        "provider": "kimi",
-        "model_id": "moonshot-v1-128k",
-        "vision": true
-      },
-      {
-        "provider": "together",
-        "model_id": "meta-llama/Llama-3.3-70B-Instruct-Turbo"
       }
     ],
     "fast": [
       {
-        "provider": "groq",
-        "model_id": "llama-3.3-70b-versatile"
+        "provider": "opencode-go",
+        "model_id": "mimo-v2.5",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "vision": true
       },
       {
         "provider": "opencode-go",
-        "model_id": "deepseek-v4-flash"
-      },
-      {
-        "provider": "cerebras",
-        "model_id": "llama-3.3-70b"
-      },
-      {
-        "provider": "qwen",
-        "model_id": "qwen-turbo"
-      },
-      {
-        "provider": "openrouter",
-        "model_id": "meta-llama/llama-3.3-70b-instruct:free"
+        "model_id": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "max_tokens": 4096
       }
     ],
     "vision": [
@@ -236,11 +199,6 @@
       {
         "provider": "minimax",
         "model_id": "MiniMax-M3",
-        "vision": true
-      },
-      {
-        "provider": "qwen",
-        "model_id": "qwen-vl-max",
         "vision": true
       },
       {
@@ -269,11 +227,6 @@
         "provider": "openrouter",
         "model_id": "google/gemini-2.5-pro",
         "vision": true
-      },
-      {
-        "provider": "qwen",
-        "model_id": "qwen-vl-max",
-        "vision": true
       }
     ],
     "vision_long_context": [
@@ -291,52 +244,30 @@
         "provider": "openrouter",
         "model_id": "google/gemini-2.5-pro",
         "vision": true
-      },
-      {
-        "provider": "kimi",
-        "model_id": "moonshot-v1-128k",
-        "vision": true
       }
     ]
   },
-  "model_overrides": {
-    "deepseek-v4-flash": {
+  "model_overrides": {},
+  "model_family_overrides": {
+    "opus": {
+      "provider": "minimax",
+      "model_id": "MiniMax-M3",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "sonnet": {
       "provider": "opencode-go",
       "model_id": "deepseek-v4-flash",
       "temperature": 0.7,
       "max_tokens": 4096
     },
-    "mimo-v2.5": {
+    "haiku": {
       "provider": "opencode-go",
       "model_id": "mimo-v2.5",
       "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "deepseek-chat": {
-      "provider": "deepseek",
-      "model_id": "deepseek-chat",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "glm-4.6": {
-      "provider": "glm",
-      "model_id": "glm-4.6",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "qwen-plus": {
-      "provider": "qwen",
-      "model_id": "qwen-plus",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    }
-  },
-  "model_family_overrides": {
-    "haiku": {
-      "provider": "qwen",
-      "model_id": "qwen-turbo",
-      "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 4096,
+      "vision": true
     }
   },
   "minimax": {
@@ -381,20 +312,6 @@
     "timeout_ms": 300000,
     "no_auth": true
   },
-  "groq": {
-    "base_url": "https://api.groq.com/openai/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_GROQ_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "cerebras": {
-    "base_url": "https://api.cerebras.ai/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_CEREBRAS_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
   "cloudflare": {
     "base_url": "https://api.cloudflare.com/client/v4/accounts/${ROUTATIC_PROXY_CF_ACCOUNT_ID}/ai/v1/chat/completions",
     "api_keys": [
@@ -427,34 +344,6 @@
     "base_url": "https://api.deepseek.com/v1/chat/completions",
     "api_keys": [
       "${ROUTATIC_PROXY_DEEPSEEK_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "siliconflow": {
-    "base_url": "https://api.siliconflow.cn/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_SILICONFLOW_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "glm": {
-    "base_url": "https://api.z.ai/api/paas/v4/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_GLM_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "kimi": {
-    "base_url": "https://api.moonshot.cn/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_KIMI_API_KEY}"
-    ],
-    "timeout_ms": 300000
-  },
-  "qwen": {
-    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    "api_keys": [
-      "${ROUTATIC_PROXY_QWEN_API_KEY}"
     ],
     "timeout_ms": 300000
   },

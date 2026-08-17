@@ -12,10 +12,5 @@ aws-bedrock
 anthropic
 minimax
 deepseek
-glm
-qwen
-kimi
-groq
-cerebras
 together
 gemini_free
