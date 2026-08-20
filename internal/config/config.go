@@ -16,6 +16,7 @@ type Config struct {
 	HotReload                      bool                     `json:"hot_reload"`
 	EnableStreamingScenarioRouting bool                     `json:"enable_streaming_scenario_routing"`
 	EnableCostBasedRouting         bool                     `json:"enable_cost_based_routing"`
+	AdvertiseGatewayModels         bool                     `json:"advertise_gateway_models,omitempty"`
 	TrustLoopbackUserHeader        bool                     `json:"trust_loopback_user_header,omitempty"`
 	CostRouting                    *CostRoutingConfig       `json:"cost_routing,omitempty"`
 	RespectRequestedModel          *bool                    `json:"respect_requested_model,omitempty"`

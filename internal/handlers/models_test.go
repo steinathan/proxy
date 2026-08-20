@@ -58,6 +58,35 @@ func TestHandleListModels_ReturnsOpenAIEnvelope(t *testing.T) {
 	}
 }
 
+func TestHandleListModels_OmitsCatalogWhenAdvertiseGatewayModelsFalse(t *testing.T) {
+	atomic := config.NewAtomicConfig(&config.Config{
+		AdvertiseGatewayModels: false,
+		Models: map[string]config.ModelConfig{
+			"default": {Provider: "opencode-go", ModelID: "muse-spark"},
+		},
+	}, "/tmp/test-config-no-catalog.json")
+	handler := NewModelsHandler(router.NewModelRouter(atomic))
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v1/models", nil)
+	handler.HandleListModels(recorder, req)
+
+	if got, want := recorder.Code, http.StatusOK; got != want {
+		t.Fatalf("status = %d, want %d", got, want)
+	}
+
+	var resp openAIModelList
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("response is invalid JSON: %v", err)
+	}
+
+	for _, m := range resp.Data {
+		if m.ID == "claude-haiku-4-5" || m.ID == "claude-opus-4-8" || m.ID == "claude-sonnet-4-6" {
+			t.Errorf("gateway-routed Claude model %q should be omitted when AdvertiseGatewayModels=false", m.ID)
+		}
+	}
+}
+
 func TestHandleListModels_RejectsNonGET(t *testing.T) {
 	atomic := config.NewAtomicConfig(&config.Config{}, "/tmp/test-config.json")
 	handler := NewModelsHandler(router.NewModelRouter(atomic))

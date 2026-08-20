@@ -415,9 +415,11 @@ func (r *ModelRouter) ListModels(ctx context.Context) []ModelInfo {
 		add(alias, "", mc.Provider)
 	}
 
-	if cat, err := r.catalog(ctx); err == nil && cat != nil {
-		for key, model := range cat.Models {
-			add(key, model.DisplayName(), catalog.ProviderFromModelKey(key))
+	if cfg.AdvertiseGatewayModels {
+		if cat, err := r.catalog(ctx); err == nil && cat != nil {
+			for key, model := range cat.Models {
+				add(key, model.DisplayName(), catalog.ProviderFromModelKey(key))
+			}
 		}
 	}
 
