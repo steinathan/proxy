@@ -320,9 +320,9 @@ func TestClassifyEndpoint(t *testing.T) {
 			expected: EndpointChatCompletions,
 		},
 		{
-			name:     "grok-build-0.1 uses chat completions endpoint",
+			name:     "grok-build-0.1 uses responses endpoint",
 			modelID:  "grok-build-0.1",
-			expected: EndpointChatCompletions,
+			expected: EndpointResponses,
 		},
 		{
 			name:     "big-pickle uses chat completions endpoint",
@@ -375,10 +375,13 @@ func TestIsGeminiModel(t *testing.T) {
 		modelID string
 		want    bool
 	}{
-		// Gemini models
+		// Gemini models (prefix check)
 		{"gemini-3.5-flash", true},
 		{"gemini-3.1-pro", true},
 		{"gemini-3-flash", true},
+		{"gemini-3.7-flash", true},
+		{"gemini-3.6-flash", true},
+		{"gemini-3.5-flash-lite", true},
 		// Non-Gemini models
 		{"kimi-k2.6", false},
 		{"kimi-k2.7-code", false},
@@ -407,32 +410,38 @@ func TestIsResponsesModel(t *testing.T) {
 		modelID string
 		want    bool
 	}{
-		// GPT 5.5 series
+		// GPT models (prefix check)
 		{"gpt-5.5", true},
 		{"gpt-5.5-pro", true},
 		{"gpt-5.5-mini", true},
 		{"gpt-5.5-nano", true},
-		// GPT 5.4 series
 		{"gpt-5.4", true},
 		{"gpt-5.4-pro", true},
 		{"gpt-5.4-mini", true},
 		{"gpt-5.4-nano", true},
-		// GPT 5.3 series
 		{"gpt-5.3-codex", true},
 		{"gpt-5.3-codex-spark", true},
-		// GPT 5.2 series
 		{"gpt-5.2", true},
 		{"gpt-5.2-codex", true},
-		// GPT 5.1 series
 		{"gpt-5.1", true},
 		{"gpt-5.1-codex", true},
 		{"gpt-5.1-codex-max", true},
 		{"gpt-5.1-codex-mini", true},
-		// GPT 5 series
 		{"gpt-5", true},
 		{"gpt-5-codex", true},
 		{"gpt-5-nano", true},
-		// Non-GPT models
+		{"gpt-5.6-sol", true},
+		{"gpt-5.6-terra", true},
+		{"gpt-5.6-luna", true},
+		// Grok models (prefix check)
+		{"grok-4.5", true},
+		{"grok-4.6", true},
+		{"grok-build-0.1", true},
+		// Muse Spark models (prefix check)
+		{"muse-spark-1.2", true},
+		{"muse-spark-1.2-contributor", true},
+		{"muse-spark-1.2-contributor-free", true},
+		// Non-Responses models
 		{"kimi-k2.6", false},
 		{"kimi-k2.7-code", false},
 		{"glm-5.1", false},
@@ -952,6 +961,52 @@ func TestOpenRouterChatCompletion_UsesBearerAuth(t *testing.T) {
 	}
 	if gotAuth != "Bearer openrouter-key" {
 		t.Errorf("Authorization header = %q, want %q", gotAuth, "Bearer openrouter-key")
+	}
+}
+
+func TestOpenRouterChatCompletion_UsesAttributionHeaders(t *testing.T) {
+	var gotHeaders http.Header
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Clone()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"resp-1","object":"chat.completion","created":1,"model":"openrouter/model","choices":[],"usage":{}}`))
+	}))
+	defer ts.Close()
+
+	cfg := &config.Config{
+		OpenRouter: config.OpenRouterConfig{
+			BaseURL: ts.URL,
+			APIKey:  "openrouter-key",
+		},
+	}
+	atomicCfg := config.NewAtomicConfig(cfg, "")
+	c := NewOpenCodeClient(atomicCfg, nil)
+
+	model := config.ModelConfig{Provider: ProviderOpenRouter, ModelID: "openrouter/model"}
+	req := &types.ChatCompletionRequest{
+		Model:    "openrouter/model",
+		Messages: []types.ChatMessage{{Role: "user", Content: json.RawMessage(`"hello"`)}},
+	}
+	if _, err := c.ChatCompletionNonStreaming(context.Background(), "openrouter/model", req, model); err != nil {
+		t.Fatalf("ChatCompletionNonStreaming() error = %v", err)
+	}
+
+	tests := []struct {
+		name   string
+		header string
+		want   string
+	}{
+		{name: "user agent", header: "User-Agent", want: "routatic-proxy"},
+		{name: "referer", header: "HTTP-Referer", want: "https://github.com/routatic/proxy"},
+		{name: "title", header: "X-OpenRouter-Title", want: "routatic-proxy"},
+		{name: "category", header: "X-OpenRouter-Categories", want: "cli-agent"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := gotHeaders.Get(tt.header); got != tt.want {
+				t.Errorf("%s = %q, want %q", tt.header, got, tt.want)
+			}
+		})
 	}
 }
 

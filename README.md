@@ -96,6 +96,10 @@ export ANTHROPIC_AUTH_TOKEN=unused
 claude
 ```
 
+**Fedora / RHEL:** each release ships `x86_64` and `aarch64` RPMs —
+`sudo dnf install https://github.com/routatic/proxy/releases/download/vX.Y.Z/routatic-proxy-X.Y.Z-1.x86_64.rpm`.
+See [docs/fedora-setup.md](docs/fedora-setup.md) for package contents and the systemd user service.
+
 See [INSTALLATION.md](INSTALLATION.md) for Homebrew, Scoop, Docker, and build-from-source options.
 
 Prefer a GUI for switching providers? routatic-proxy works with [CC-Switch](https://github.com/farion1231/cc-switch) — see [Using with CC-Switch](CONFIGURATION.md#using-with-cc-switch).
@@ -112,7 +116,9 @@ routatic-proxy validate           Validate configuration file
 routatic-proxy models             List all available models
 routatic-proxy ui                 Launch the GUI dashboard
 routatic-proxy autostart enable   Enable auto-start on login
-routatic-proxy update              Update to the latest release
+routatic-proxy update             Update to the latest release on your channel
+routatic-proxy update check       Check for a newer release without installing
+routatic-proxy update-channel     Show or switch release channel (stable|beta)
 routatic-proxy --version          Show version
 ```
 
@@ -120,10 +126,9 @@ routatic-proxy --version          Show version
 
 | Document | Description |
 |----------|-------------|
-| [docs/models.md](docs/models.md) | Model reference across all providers |
+| [MODELS.md](MODELS.md) | Model reference across all providers — capabilities, costs, endpoints, routing recommendations |
 | [docs/openrouter.md](docs/openrouter.md) | OpenRouter provider setup and configuration |
 | [CONFIGURATION.md](CONFIGURATION.md) | Config file reference, env vars, model routing, fallback chains |
-| [MODELS.md](MODELS.md) | Complete model capabilities, costs, and routing recommendations |
 | [INSTALLATION.md](INSTALLATION.md) | Homebrew, Scoop, build from source, Docker |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup, architecture |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and debug mode |
@@ -136,12 +141,21 @@ routatic-proxy --version          Show version
 
 ## Release Channels
 
-This project uses a dual release channel system. See [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for full details.
+This project ships on two channels. Stable is the default; beta gets you the newest features early.
+
+```bash
+routatic-proxy update-channel beta     # opt in to betas
+routatic-proxy update                  # install the newest beta
+routatic-proxy update-channel stable   # back to stable releases
+```
+
+See [Beta Releases](INSTALLATION.md#beta-releases) for the full walkthrough (Docker `beta` tag, installing a specific prerelease, returning to a stable build) and [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for how releases are built.
 
 ### Beta Channel (Automatic)
 - **Trigger:** Every push to `main` branch
-- **Version format:** `v{UPCOMING}-beta.{N}` (e.g., `v0.5.3-beta.1`), where `{N}` is a sequential counter
+- **Version format:** `v{UPCOMING}-beta.{N}` (e.g., `v0.6.4-beta.1`), where `{N}` is a sequential counter that restarts once that version ships as stable
 - **GitHub release:** Marked as prerelease
+- **Docker tags:** `beta` (rolling), plus the exact `v{UPCOMING}-beta.{N}`
 - **Use case:** Get the latest features and bug fixes immediately; ideal for testing
 
 ### Production Channel (Manual)
