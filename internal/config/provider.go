@@ -15,6 +15,7 @@ const (
 	ProviderOpenCodeZen = "opencode-zen"
 	ProviderAWSBedrock  = "aws-bedrock"
 	ProviderOpenRouter  = "openrouter"
+	ProviderMinimax     = "minimax"
 )
 
 // KnownProviders lists every canonical provider name, in the order used for
@@ -24,6 +25,7 @@ var KnownProviders = []string{
 	ProviderOpenCodeZen,
 	ProviderAWSBedrock,
 	ProviderOpenRouter,
+	ProviderMinimax,
 }
 
 // NormalizeProvider maps a configured provider string to its canonical form.
