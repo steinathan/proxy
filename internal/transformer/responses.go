@@ -96,7 +96,6 @@ func (t *RequestTransformer) TransformToResponses(
 		Input:  input,
 		Stream: anthropicReq.Stream != nil && *anthropicReq.Stream,
 	}
-
 	// Transform tools if present
 	if len(anthropicReq.Tools) > 0 {
 		req.Tools = t.transformToolsForResponses(anthropicReq.Tools)

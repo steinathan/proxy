@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1050,6 +1051,28 @@ func (h *MessagesHandler) handleResponsesStreaming(
 	req, err := h.requestTransformer.TransformToResponses(anthropicReq, model)
 	if err != nil {
 		return fmt.Errorf("responses transform failed: %w", err)
+	}
+	// Debug: log the full upstream request for every muse attempt so we can
+	// see exactly which input element Console Go rejects. Remove once resolved.
+	if model.ModelID == "muse-spark-1.2-contributor" {
+		var inputs []map[string]any
+		for i, in := range req.Input {
+			inputs = append(inputs, map[string]any{
+				"index":   i,
+				"type":    in.Type,
+				"role":    in.Role,
+				"call_id": in.CallID,
+				"name":    in.Name,
+			})
+		}
+		if b, err := json.Marshal(req); err == nil {
+			h.logger.Info("MUSE_DEBUG request", "input_len", len(req.Input), "inputs", inputs, "full", string(b))
+		}
+		if b, err := json.MarshalIndent(req, "", "  "); err == nil {
+			if err := os.WriteFile("/tmp/muse_debug.json", b, 0644); err != nil {
+				h.logger.Warn("failed to write muse debug", "error", err)
+			}
+		}
 	}
 
 	streamBody, err := h.client.GetResponsesStreamingBody(ctx, model.ModelID, req, model)

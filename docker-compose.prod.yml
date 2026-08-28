@@ -20,6 +20,7 @@ services:
       ROUTATIC_PROXY_SHARED_SECRET: ${ROUTATIC_PROXY_SHARED_SECRET}
     volumes:
       - ./configs/config.json:/etc/routatic-proxy/config.json:ro
+      - ./tmp:/tmp
     ports:
       - "127.0.0.1:3456:3456"   # only Caddy reaches this
     healthcheck:

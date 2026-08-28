@@ -57,18 +57,65 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 
 	// Convert messages.
 	for _, msg := range req.Messages {
-		input := types.ResponsesInput{Role: msg.Role}
+		// Handle tool results as separate function_call_output inputs
+		if len(msg.ToolResultsList()) > 0 {
+			for _, tr := range msg.ToolResultsList() {
+				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+					Type:   "function_call_output",
+					CallID: tr.ToolCallID,
+					Output: tr.Content,
+				})
+			}
+			// If the message also has text, add it as a separate input
+			if text := msg.TextContent(); text != "" {
+				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+					Role:    msg.Role,
+					Content: rawJSONString(text),
+				})
+			}
+			continue
+		}
+		// Handle assistant tool calls as separate function_call inputs
+		if len(msg.ToolCallsList()) > 0 {
+			// Flush any text first
+			if text := msg.TextContent(); text != "" {
+				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+					Role:    msg.Role,
+					Content: rawJSONString(text),
+				})
+			}
+			for _, tc := range msg.ToolCallsList() {
+				args := tc.Arguments
+				if args == "" {
+					args = "{}"
+				}
+				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+					Type:      "function_call",
+					CallID:    tc.ID,
+					Name:      tc.Name,
+					Arguments: args,
+				})
+			}
+			continue
+		}
+		// Regular text/image messages
 		content := msg.TextContent()
-
-		// For assistant messages with tool calls, serialize as text.
-		for _, tc := range msg.ToolCallsList() {
-			content += "[Tool: " + tc.Name + "(" + tc.Arguments + ")]"
+		// Handle images as [Image] placeholder for now (vision not fully supported in Responses)
+		if content == "" {
+			// Check for image blocks
+			for _, b := range msg.Blocks {
+				if b.Type == "image" {
+					content = "[Image]"
+					break
+				}
+			}
 		}
-
 		if content != "" {
-			input.Content = rawJSONString(content)
+			responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+				Role:    msg.Role,
+				Content: rawJSONString(content),
+			})
 		}
-		responsesReq.Input = append(responsesReq.Input, input)
 	}
 
 	// Convert tools.
