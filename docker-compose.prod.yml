@@ -8,7 +8,7 @@ services:
   proxy:
     build:
       context: .
-      dockerfile: Dockerfile.proxy
+      dockerfile: Dockerfile.prod
     restart: unless-stopped
     environment:
       ROUTATIC_PROXY_HOST: "0.0.0.0"
