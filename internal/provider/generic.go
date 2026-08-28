@@ -33,7 +33,7 @@ type GenericProvider struct {
 func NewGenericProvider(atomic *config.AtomicConfig, cfg config.GenericProviderConfig) *GenericProvider {
 	return &GenericProvider{
 		baseProvider: newBaseProvider(atomic),
-		cfg:         cfg,
+		cfg:          cfg,
 	}
 }
 
@@ -58,7 +58,7 @@ func (p *GenericProvider) ModelCapabilities(_ string) (core.ProviderCapabilities
 	return p.Capabilities(), true
 }
 
-func (p *GenericProvider) WireFormat(_ string) core.WireFormat {
+func (p *GenericProvider) WireFormat(_ config.ModelConfig) core.WireFormat {
 	return core.WireFormatOpenAIChat
 }
 

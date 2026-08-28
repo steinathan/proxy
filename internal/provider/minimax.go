@@ -48,7 +48,7 @@ func (p *MinimaxProvider) ModelCapabilities(modelID string) (core.ProviderCapabi
 }
 
 // WireFormat returns the wire format; MiniMax is always Anthropic.
-func (p *MinimaxProvider) WireFormat(modelID string) core.WireFormat {
+func (p *MinimaxProvider) WireFormat(model config.ModelConfig) core.WireFormat {
 	return core.WireFormatAnthropic
 }
 

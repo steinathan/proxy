@@ -28,14 +28,21 @@ type Config struct {
 	OpenCodeGo                     OpenCodeGoConfig         `json:"opencode_go"`
 	OpenCodeZen                    OpenCodeZenConfig        `json:"opencode_zen"`
 	OpenRouter                     OpenRouterConfig         `json:"openrouter"`
-	GenericProviders               []GenericProviderConfig `json:"generic_providers,omitempty"`
+	GenericProviders               []GenericProviderConfig  `json:"generic_providers,omitempty"`
 	Minimax                        MinimaxConfig            `json:"minimax"`
 	AnthropicFirst                 AnthropicFirstConfig     `json:"anthropic_first"`
 	Logging                        LoggingConfig            `json:"logging"`
 	Debug                          DebugConfig              `json:"debug"`
 	Catalog                        CatalogConfig            `json:"catalog"`
+	Performance                    PerformanceConfig        `json:"performance,omitempty"`
 	Storage                        *StorageConfig           `json:"storage,omitempty"`
 	UpdateChannel                  string                   `json:"update_channel,omitempty"`
+}
+
+// PerformanceConfig controls bounded in-process latency optimizations.
+type PerformanceConfig struct {
+	TokenCountCacheEnabled  *bool `json:"token_count_cache_enabled,omitempty"`
+	TokenCountCacheCapacity int   `json:"token_count_cache_capacity,omitempty"`
 }
 
 // CostRoutingConfig controls cost-aware model selection.
@@ -82,6 +89,11 @@ type DebugConfig struct {
 }
 
 // ModelConfig defines routing rules for a specific model.
+//
+// WireFormat support is per-provider: opencode-go honours "openai",
+// "anthropic" and "responses" (not "gemini" — it has no Gemini endpoint),
+// while opencode-zen and aws-bedrock classify by model ID and ignore the
+// override. Unrecognised values fall back to the provider's classification.
 type ModelConfig struct {
 	Provider               string          `json:"provider"`
 	ModelID                string          `json:"model_id"`
@@ -131,6 +143,7 @@ func (c *AWSBedrockConfig) EffectiveAPIKeys() []string {
 type OpenCodeGoConfig struct {
 	BaseURL            string   `json:"base_url"`
 	AnthropicBaseURL   string   `json:"anthropic_base_url"`
+	ResponsesBaseURL   string   `json:"responses_base_url,omitempty"`
 	APIKey             string   `json:"api_key,omitempty"`
 	APIKeys            []string `json:"api_keys,omitempty"`
 	TimeoutMs          int      `json:"timeout_ms"`
@@ -178,11 +191,11 @@ func (c *OpenRouterConfig) EffectiveAPIKeys() []string {
 // provider (e.g. groq, xai, mistral, kiro) configured by name + base_url +
 // a pool of api_keys. Configured via config.json:
 //
-//   "generic_providers": [
-//     { "name": "groq",    "base_url": "https://api.groq.com/openai/v1",   "api_keys": ["gsk-..."] },
-//     { "name": "xai",     "base_url": "https://api.x.ai/v1",             "api_keys": ["xai-..."] },
-//     { "name": "mistral", "base_url": "https://api.mistral.ai/v1",       "api_keys": ["..."] }
-//   ]
+//	"generic_providers": [
+//	  { "name": "groq",    "base_url": "https://api.groq.com/openai/v1",   "api_keys": ["gsk-..."] },
+//	  { "name": "xai",     "base_url": "https://api.x.ai/v1",             "api_keys": ["xai-..."] },
+//	  { "name": "mistral", "base_url": "https://api.mistral.ai/v1",       "api_keys": ["..."] }
+//	]
 //
 // All requests to these providers are translated to OpenAI Chat Completions
 // by the proxy's existing transformer — same path as OpenRouter.

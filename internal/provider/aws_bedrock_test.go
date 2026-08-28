@@ -24,7 +24,7 @@ func TestAWSBedrockProvider_WireFormat(t *testing.T) {
 	cfg := &config.Config{}
 	atomic := config.NewAtomicConfig(cfg, "")
 	p := NewAWSBedrockProvider(atomic)
-	if got := p.WireFormat("any-model"); got != core.WireFormatOpenAIChat {
+	if got := p.WireFormat(config.ModelConfig{ModelID: "any-model"}); got != core.WireFormatOpenAIChat {
 		t.Errorf("WireFormat() = %v, want WireFormatOpenAIChat", got)
 	}
 }
@@ -37,7 +37,7 @@ func TestAWSBedrockProvider_WireFormat_Anthropic(t *testing.T) {
 	}
 	atomic := config.NewAtomicConfig(cfg, "")
 	p := NewAWSBedrockProvider(atomic)
-	if got := p.WireFormat("any-model"); got != core.WireFormatAnthropic {
+	if got := p.WireFormat(config.ModelConfig{ModelID: "any-model"}); got != core.WireFormatAnthropic {
 		t.Errorf("WireFormat() = %v, want WireFormatAnthropic", got)
 	}
 }
@@ -111,6 +111,9 @@ func TestAWSBedrockProvider_Execute(t *testing.T) {
 		if r.Header.Get("OpenAI-Project") != "proj_123" {
 			t.Errorf("OpenAI-Project = %q, want %q", r.Header.Get("OpenAI-Project"), "proj_123")
 		}
+		if r.Header.Get("User-Agent") != "routatic-proxy" {
+			t.Errorf("User-Agent = %q, want %q", r.Header.Get("User-Agent"), "routatic-proxy")
+		}
 		if r.Header.Get("Content-Type") != "application/json" {
 			t.Errorf("Content-Type = %q, want %q", r.Header.Get("Content-Type"), "application/json")
 		}
@@ -152,7 +155,7 @@ func TestAWSBedrockProvider_Execute(t *testing.T) {
 
 	req := &core.NormalizedRequest{
 		Model:    "moonshotai.kimi-k2.5",
-		Messages: []core.NormalizedMessage{{Role: "user", Content: "Hi"}},
+		Messages: []core.NormalizedMessage{{Role: "user", Blocks: []core.NormalizedContentBlock{{Type: "text", Text: "Hi"}}}},
 	}
 	model := config.ModelConfig{ModelID: "moonshotai.kimi-k2.5"}
 
@@ -201,7 +204,7 @@ func TestAWSBedrockProvider_Stream(t *testing.T) {
 
 	req := &core.NormalizedRequest{
 		Model:    "moonshotai.kimi-k2.5",
-		Messages: []core.NormalizedMessage{{Role: "user", Content: "Hi"}},
+		Messages: []core.NormalizedMessage{{Role: "user", Blocks: []core.NormalizedContentBlock{{Type: "text", Text: "Hi"}}}},
 		Stream:   true,
 	}
 	model := config.ModelConfig{ModelID: "moonshotai.kimi-k2.5"}
@@ -215,6 +218,75 @@ func TestAWSBedrockProvider_Stream(t *testing.T) {
 	buf := make([]byte, 1024)
 	n, _ := body.Read(buf)
 	if n == 0 {
+		t.Error("Stream() returned empty body")
+	}
+}
+
+func TestAWSBedrockProvider_ExecuteAnthropic_UsesUserAgent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("User-Agent") != "routatic-proxy" {
+			t.Errorf("User-Agent = %q, want %q", r.Header.Get("User-Agent"), "routatic-proxy")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"msg-test","content":[{"type":"text","text":"hi"}]}`))
+	}))
+	defer server.Close()
+
+	cfg := &config.Config{
+		AWSBedrock: config.AWSBedrockConfig{
+			AnthropicBaseURL: server.URL,
+			APIKey:           "test-key",
+		},
+	}
+	atomic := config.NewAtomicConfig(cfg, "")
+	p := NewAWSBedrockProvider(atomic)
+
+	req := &core.NormalizedRequest{
+		Model:    "anthropic.claude-sonnet-4",
+		Messages: []core.NormalizedMessage{{Role: "user", Blocks: []core.NormalizedContentBlock{{Type: "text", Text: "Hi"}}}},
+	}
+	model := config.ModelConfig{ModelID: "anthropic.claude-sonnet-4"}
+
+	if _, err := p.Execute(context.Background(), req, model); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+}
+
+func TestAWSBedrockProvider_StreamAnthropic_UsesUserAgent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("User-Agent") != "routatic-proxy" {
+			t.Errorf("User-Agent = %q, want %q", r.Header.Get("User-Agent"), "routatic-proxy")
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("event: message_start\n"))
+		_, _ = w.Write([]byte("data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\"}}\n\n"))
+	}))
+	defer server.Close()
+
+	cfg := &config.Config{
+		AWSBedrock: config.AWSBedrockConfig{
+			AnthropicBaseURL: server.URL,
+			APIKey:           "test-key",
+		},
+	}
+	atomic := config.NewAtomicConfig(cfg, "")
+	p := NewAWSBedrockProvider(atomic)
+
+	req := &core.NormalizedRequest{
+		Model:    "anthropic.claude-sonnet-4",
+		Messages: []core.NormalizedMessage{{Role: "user", Blocks: []core.NormalizedContentBlock{{Type: "text", Text: "Hi"}}}},
+		Stream:   true,
+	}
+	model := config.ModelConfig{ModelID: "anthropic.claude-sonnet-4"}
+
+	body, err := p.Stream(context.Background(), req, model)
+	if err != nil {
+		t.Fatalf("Stream() error = %v", err)
+	}
+	defer func() { _ = body.Close() }()
+
+	buf := make([]byte, 1024)
+	if n, _ := body.Read(buf); n == 0 {
 		t.Error("Stream() returned empty body")
 	}
 }
@@ -247,7 +319,7 @@ func TestAWSBedrockProvider_Execute_NoProjectID(t *testing.T) {
 
 	req := &core.NormalizedRequest{
 		Model:    "test-model",
-		Messages: []core.NormalizedMessage{{Role: "user", Content: "Hi"}},
+		Messages: []core.NormalizedMessage{{Role: "user", Blocks: []core.NormalizedContentBlock{{Type: "text", Text: "Hi"}}}},
 	}
 	model := config.ModelConfig{ModelID: "test-model"}
 

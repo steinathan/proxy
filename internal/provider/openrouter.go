@@ -48,7 +48,7 @@ func (p *OpenRouterProvider) ModelCapabilities(modelID string) (core.ProviderCap
 }
 
 // WireFormat returns the wire format; OpenRouter always speaks OpenAI.
-func (p *OpenRouterProvider) WireFormat(modelID string) core.WireFormat {
+func (p *OpenRouterProvider) WireFormat(model config.ModelConfig) core.WireFormat {
 	return core.WireFormatOpenAIChat
 }
 

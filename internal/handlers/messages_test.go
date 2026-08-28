@@ -430,7 +430,7 @@ func (p *usageLimitStreamProvider) Capabilities() core.ProviderCapabilities {
 func (p *usageLimitStreamProvider) ModelCapabilities(string) (core.ProviderCapabilities, bool) {
 	return p.Capabilities(), true
 }
-func (p *usageLimitStreamProvider) WireFormat(string) core.WireFormat {
+func (p *usageLimitStreamProvider) WireFormat(config.ModelConfig) core.WireFormat {
 	return core.WireFormatAnthropic
 }
 func (p *usageLimitStreamProvider) Execute(context.Context, *core.NormalizedRequest, config.ModelConfig) (*core.ExecuteResult, error) {
@@ -476,7 +476,7 @@ func TestHandleStreaming_UsageLimitSkipsRemainingProviderModels(t *testing.T) {
 	stream := true
 	req := httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
 	rec := httptest.NewRecorder()
-h.handleStreaming(rec,
+	h.handleStreaming(rec,
 		req,
 		&types.MessageRequest{Stream: &stream},
 		&core.NormalizedRequest{Stream: true},
@@ -739,7 +739,7 @@ func TestHandleStreaming_GoAnthropicModel_SendsRawAnthropicBody(t *testing.T) {
 		router.Scenario(""),
 		"",
 		"",
-			"")
+		"")
 	if len(capturedBody) == 0 {
 		t.Fatal("upstream received no body")
 	}
@@ -842,7 +842,7 @@ func TestHandleStreaming_GoAnthropicModel_FallsThroughOnError(t *testing.T) {
 		router.Scenario(""),
 		"",
 		"",
-			"")
+		"")
 	finalCount := atomic.LoadInt32(&callCount)
 	if finalCount != 2 {
 		t.Fatalf("expected 2 upstream calls (1 fail + 1 success), got %d", finalCount)
@@ -905,7 +905,7 @@ func TestHandleMessages_UnknownProvider(t *testing.T) {
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -993,7 +993,7 @@ func TestHandleMessages_StreamingMinimaxM3_UsesAnthropicEndpoint(t *testing.T) {
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1112,7 +1112,7 @@ func TestHandleNonStreaming_GoAnthropicModel_ReplacesModelInBody(t *testing.T) {
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1234,7 +1234,7 @@ func TestHandleNonStreaming_ZenAnthropicModel_ReplacesModelInBody(t *testing.T) 
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1349,15 +1349,16 @@ func TestHandleStreaming_ConfigurableTimeout(t *testing.T) {
 	go func() {
 		defer close(done)
 		handler.handleStreaming(recorder,
-		req.WithContext(ctx),
-		&anthropicReq,
-		&core.NormalizedRequest{Stream: true},
-		chain,
-		rawBody,
-		router.Scenario(""),
-		"",
-		"",
-			"")	}()
+			req.WithContext(ctx),
+			&anthropicReq,
+			&core.NormalizedRequest{Stream: true},
+			chain,
+			rawBody,
+			router.Scenario(""),
+			"",
+			"",
+			"")
+	}()
 
 	select {
 	case <-done:
@@ -1409,15 +1410,16 @@ func TestHandleStreaming_ClientContextCanceled_StopsFallback(t *testing.T) {
 	go func() {
 		defer close(done)
 		handler.handleStreaming(recorder,
-		req.WithContext(ctx),
-		&anthropicReq,
-		&core.NormalizedRequest{Stream: true},
-		chain,
-		rawBody,
-		router.Scenario(""),
-		"",
-		"",
-			"")	}()
+			req.WithContext(ctx),
+			&anthropicReq,
+			&core.NormalizedRequest{Stream: true},
+			chain,
+			rawBody,
+			router.Scenario(""),
+			"",
+			"",
+			"")
+	}()
 
 	select {
 	case <-done:
@@ -1474,15 +1476,16 @@ func TestHandleStreaming_ClientDisconnectsDuringStream_StopsFallback(t *testing.
 	go func() {
 		defer close(done)
 		handler.handleStreaming(recorder,
-		req.WithContext(ctx),
-		&anthropicReq,
-		&core.NormalizedRequest{Stream: true},
-		chain,
-		rawBody,
-		router.Scenario(""),
-		"",
-		"",
-			"")	}()
+			req.WithContext(ctx),
+			&anthropicReq,
+			&core.NormalizedRequest{Stream: true},
+			chain,
+			rawBody,
+			router.Scenario(""),
+			"",
+			"",
+			"")
+	}()
 
 	time.Sleep(100 * time.Millisecond)
 	cancel()
@@ -1560,15 +1563,16 @@ func TestHandleStreaming_PerModelTimeoutFallback(t *testing.T) {
 	go func() {
 		defer close(done)
 		handler.handleStreaming(recorder,
-		req.WithContext(ctx),
-		&anthropicReq,
-		&core.NormalizedRequest{Stream: true},
-		chain,
-		rawBody,
-		router.Scenario(""),
-		"",
-		"",
-			"")	}()
+			req.WithContext(ctx),
+			&anthropicReq,
+			&core.NormalizedRequest{Stream: true},
+			chain,
+			rawBody,
+			router.Scenario(""),
+			"",
+			"",
+			"")
+	}()
 
 	select {
 	case <-done:
@@ -1635,7 +1639,7 @@ func TestHandleNonStreaming_ParentContextCanceled_No502(t *testing.T) {
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1722,7 +1726,7 @@ func TestHandleNonStreaming_ParentDeadlineExceeded_No502(t *testing.T) {
 		nil,
 		// storage
 		nil,
-		)
+	)
 	handler.logger = slog.Default()
 
 	requestBody := `{
@@ -1941,15 +1945,16 @@ func TestHandleStreaming_AnthropicRaw_NoKeepaliveInjection(t *testing.T) {
 	go func() {
 		defer close(done)
 		handler.handleStreaming(recorder,
-		req.WithContext(ctx),
-		&anthropicReq,
-		&core.NormalizedRequest{Stream: true},
-		chain,
-		rawBody,
-		router.Scenario(""),
-		"",
-		"",
-			"")	}()
+			req.WithContext(ctx),
+			&anthropicReq,
+			&core.NormalizedRequest{Stream: true},
+			chain,
+			rawBody,
+			router.Scenario(""),
+			"",
+			"",
+			"")
+	}()
 
 	time.Sleep(1000 * time.Millisecond)
 	close(blockCh)
@@ -2027,4 +2032,3 @@ func TestExtractLoopbackUserID(t *testing.T) {
 		t.Errorf("nil atomic: got %q, want \"\"", got)
 	}
 }
-
