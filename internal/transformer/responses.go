@@ -40,13 +40,19 @@ func (t *RequestTransformer) TransformToResponses(
 			case "tool_use":
 				textParts = append(textParts, fmt.Sprintf("[Tool: %s(%s)]", block.Name, string(block.Input)))
 			case "tool_result":
-				// For Responses API, tool results are separate items
+				// Responses API does not support role:tool as separate input with current struct;
+				// inline tool results as text to avoid `input[4] did not match any supported type`.
+				// TODO: map to proper function_call_output with call_id when ResponsesInput supports it.
+				// ponytail: inline as text, proper function_call_output if ResponsesInput gains Type/CallID
 				toolContent := block.TextContent()
-				content, _ := json.Marshal(toolContent)
-				input = append(input, types.ResponsesInput{
-					Role:    "tool",
-					Content: content,
-				})
+				if toolContent != "" {
+					textParts = append(textParts, fmt.Sprintf("[Tool Result %s: %s]", block.ToolUseID, toolContent))
+				}
+			case "thinking":
+				// Preserve thinking as text for Responses
+				if block.Thinking != "" {
+					textParts = append(textParts, block.Thinking)
+				}
 			}
 		}
 
