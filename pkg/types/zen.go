@@ -15,9 +15,15 @@ type ResponsesRequest struct {
 }
 
 // ResponsesInput represents a single input item in the Responses request.
+// For text/user/assistant it uses Role+Content; for function calls it uses Type+CallID+Name/Output.
 type ResponsesInput struct {
-	Role    string          `json:"role"`
-	Content json.RawMessage `json:"content,omitempty"`
+	Type      string          `json:"type,omitempty"`
+	Role      string          `json:"role,omitempty"`
+	Content   json.RawMessage `json:"content,omitempty"`
+	CallID    string          `json:"call_id,omitempty"`
+	Name      string          `json:"name,omitempty"`
+	Arguments string          `json:"arguments,omitempty"`
+	Output    string          `json:"output,omitempty"`
 }
 
 // ResponsesTool represents a tool definition for the Responses API.
