@@ -1,0 +1,6 @@
+# brewkeg-proxy — Caddy reverse proxy for proxy.brewkeg.dev
+# Auto TLS via Let's Encrypt. Caddy handles cert provisioning/rotation.
+
+proxy.brewkeg.dev {
+    reverse_proxy proxy:3456
+}

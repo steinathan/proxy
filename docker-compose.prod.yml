@@ -1,0 +1,47 @@
+# brewkeg-proxy — production compose for VPS (helptrovert)
+#
+# Build context is the repo root (same as Dockerfile.proxy).
+# Secrets live in .env (gitignored). Run:
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    restart: unless-stopped
+    environment:
+      ROUTATIC_PROXY_HOST: "0.0.0.0"
+      ROUTATIC_PROXY_PORT: "3456"
+      ROUTATIC_PROXY_CONFIG: /etc/routatic-proxy/config.json
+      ROUTATIC_PROXY_API_KEY: ${ROUTATIC_PROXY_API_KEY}
+      ROUTATIC_PROXY_MINIMAX_API_KEY: ${ROUTATIC_PROXY_MINIMAX_API_KEY:-}
+      ROUTATIC_PROXY_OPENROUTER_API_KEY: ${ROUTATIC_PROXY_OPENROUTER_API_KEY:-}
+      ROUTATIC_PROXY_SHARED_SECRET: ${ROUTATIC_PROXY_SHARED_SECRET}
+    volumes:
+      - ./configs/config.json:/etc/routatic-proxy/config.json:ro
+    ports:
+      - "127.0.0.1:3456:3456"   # only Caddy reaches this
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3456/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - proxy
+
+volumes:
+  caddy_data:
+  caddy_config:
