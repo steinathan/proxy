@@ -310,15 +310,14 @@
     "sonnet": {
       "provider": "opencode-go",
       "model_id": "muse-spark-1.2-contributor",
-      "wire_format": "responses",
       "temperature": 0.7,
       "max_tokens": 4096,
+      "wire_format": "responses",
       "vision": true
     },
     "haiku": {
       "provider": "opencode-go",
-      "model_id": "muse-spark-1.2-contributor",
-      "wire_format": "responses",
+      "model_id": "mimo-v2.5",
       "temperature": 0.7,
       "max_tokens": 4096,
       "vision": true

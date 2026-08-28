@@ -250,6 +250,7 @@ func ResponsesToNormalized(responsesResp *types.ResponsesResponse, modelID strin
 		Model: modelID,
 	}
 
+	hasFunctionCall := false
 	for _, output := range responsesResp.Output {
 		switch output.Type {
 		case "message":
@@ -260,9 +261,17 @@ func ResponsesToNormalized(responsesResp *types.ResponsesResponse, modelID strin
 						Type: "text", Text: c.Text,
 					})
 				}
+				if c.Type == "reasoning" || c.Type == "thinking" {
+					nm.Blocks = append(nm.Blocks, core.NormalizedContentBlock{
+						Type: "thinking", Thinking: c.Text,
+					})
+				}
 			}
-			nr.Messages = append(nr.Messages, nm)
+			if len(nm.Blocks) > 0 {
+				nr.Messages = append(nr.Messages, nm)
+			}
 		case "function_call":
+			hasFunctionCall = true
 			nm := core.NormalizedMessage{
 				Role: "assistant",
 				Blocks: []core.NormalizedContentBlock{{
@@ -274,7 +283,11 @@ func ResponsesToNormalized(responsesResp *types.ResponsesResponse, modelID strin
 		}
 	}
 
-	nr.StopReason = "end_turn"
+	if hasFunctionCall {
+		nr.StopReason = "tool_use"
+	} else {
+		nr.StopReason = "end_turn"
+	}
 
 	nr.Usage = core.NormalizedUsage{
 		InputTokens:  responsesResp.Usage.InputTokens,
