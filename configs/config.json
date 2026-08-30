@@ -9,15 +9,17 @@
   "models": {
     "background": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
       "temperature": 0.5,
-      "max_tokens": 2048
+      "max_tokens": 2048,
+      "wire_format": "responses"
     },
     "default": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
       "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 4096,
+      "wire_format": "responses"
     },
     "long_context": {
       "provider": "minimax",
@@ -29,21 +31,24 @@
     },
     "think": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
       "temperature": 0.7,
-      "max_tokens": 8192
+      "max_tokens": 8192,
+      "wire_format": "responses"
     },
     "complex": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
       "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 4096,
+      "wire_format": "responses"
     },
     "fast": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
       "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 4096,
+      "wire_format": "responses"
     },
     "vision": {
       "provider": "opencode-go",
@@ -71,16 +76,17 @@
     "background": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -91,16 +97,17 @@
     "default": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -111,16 +118,17 @@
     "long_context": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -131,16 +139,17 @@
     "think": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -151,16 +160,17 @@
     "complex": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -171,16 +181,17 @@
     "fast": [
       {
         "provider": "opencode-go",
-        "model_id": "mimo-v2.5",
-        "temperature": 0.7,
-        "max_tokens": 4096,
-        "vision": true
-      },
-      {
-        "provider": "opencode-go",
         "model_id": "longcat-2.0",
         "temperature": 0.7,
         "max_tokens": 4096
+      },
+      {
+        "provider": "opencode-go",
+        "model_id": "muse-spark-1.2-contributor",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "wire_format": "responses",
+        "vision": true
       },
       {
         "provider": "minimax",
@@ -256,7 +267,8 @@
     },
     "sonnet": {
       "provider": "opencode-go",
-      "model_id": "mimo-v2.5",
+      "model_id": "muse-spark-1.2-contributor",
+      "wire_format": "responses",
       "temperature": 0.7,
       "max_tokens": 4096,
       "vision": true
