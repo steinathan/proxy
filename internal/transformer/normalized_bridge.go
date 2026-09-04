@@ -289,9 +289,15 @@ func ResponsesToNormalized(responsesResp *types.ResponsesResponse, modelID strin
 		nr.StopReason = "end_turn"
 	}
 
+	cached := responsesResp.Usage.EffectiveCacheHitTokens()
 	nr.Usage = core.NormalizedUsage{
-		InputTokens:  responsesResp.Usage.InputTokens,
-		OutputTokens: responsesResp.Usage.OutputTokens,
+		InputTokens:         responsesResp.Usage.InputTokens - cached - responsesResp.Usage.PromptCacheMissTokens,
+		OutputTokens:        responsesResp.Usage.OutputTokens,
+		CacheReadTokens:     cached,
+		CacheCreationTokens: responsesResp.Usage.PromptCacheMissTokens,
+	}
+	if nr.Usage.InputTokens < 0 {
+		nr.Usage.InputTokens = 0
 	}
 
 	return nr

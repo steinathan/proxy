@@ -733,6 +733,19 @@ func usageInfoToAnthropic(usage *types.UsageInfo) *types.Usage {
 	}
 }
 
+func responsesUsageToAnthropic(u *types.ResponsesUsage) *types.Usage {
+	if u == nil {
+		return &types.Usage{InputTokens: 0, OutputTokens: 0}
+	}
+	cached := u.EffectiveCacheHitTokens()
+	return &types.Usage{
+		InputTokens:              nonNegative(u.InputTokens - cached - u.PromptCacheMissTokens),
+		OutputTokens:             u.OutputTokens,
+		CacheCreationInputTokens: u.PromptCacheMissTokens,
+		CacheReadInputTokens:     cached,
+	}
+}
+
 // writeContentBlockStop writes a content_block_stop SSE event at the given index.
 func writeContentBlockStop(w http.ResponseWriter, index int) error {
 	return writeSSEEvent(w, types.MessageEvent{
@@ -827,6 +840,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 	reasoningStarted := false
 	stopSent := false
 	toolBlocks := make(map[int]int) // output_index -> anthropic block index
+	var terminalUsage *types.ResponsesUsage
 	readBuf := readBufPool.Get().(*[]byte)
 	defer readBufPool.Put(readBuf)
 
@@ -856,7 +870,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 			if err := writeSSEEvent(w, types.MessageEvent{
 				Type: "message_delta",
 				Delta: &types.Delta{StopReason: stopReason},
-				Usage: &types.Usage{InputTokens: 0, OutputTokens: 0},
+				Usage: responsesUsageToAnthropic(terminalUsage),
 			}); err != nil {
 				return ErrClientDisconnected
 			}
@@ -882,7 +896,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 			for i := 0; i < n; i++ {
 				b := (*readBuf)[i]
 				if b == '\n' {
-					if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks); err != nil {
+					if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks, &terminalUsage); err != nil {
 						return err
 					}
 					lineBuf = lineBuf[:0]
@@ -894,7 +908,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 
 		if err == io.EOF {
 			if len(lineBuf) > 0 {
-				if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks); err != nil {
+				if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks, &terminalUsage); err != nil {
 					return err
 				}
 			}
@@ -923,6 +937,7 @@ func (h *StreamHandler) processResponsesSSELine(
 	reasoningStarted *bool,
 	stopSent *bool,
 	toolBlocks map[int]int,
+	terminalUsage **types.ResponsesUsage,
 ) error {
 	line = bytes.TrimSpace(line)
 	if len(line) == 0 || !bytes.HasPrefix(line, []byte("data: ")) {
@@ -937,6 +952,14 @@ func (h *StreamHandler) processResponsesSSELine(
 	var chunk types.ResponsesChunk
 	if err := json.Unmarshal(data, &chunk); err != nil {
 		return nil
+	}
+
+	// Capture usage wherever it appears (direct or nested response).
+	if chunk.Usage != nil {
+		*terminalUsage = chunk.Usage
+	}
+	if chunk.Response != nil && chunk.Response.Usage.InputTokens != 0 {
+		*terminalUsage = &chunk.Response.Usage
 	}
 
 	// Text deltas — multiple event names exist across providers.
@@ -1115,7 +1138,7 @@ func (h *StreamHandler) processResponsesSSELine(
 			if err := writeSSEEvent(w, types.MessageEvent{
 				Type: "message_delta",
 				Delta: &types.Delta{StopReason: stopReason},
-				Usage: usageInfoToAnthropic(nil),
+				Usage: responsesUsageToAnthropic(*terminalUsage),
 			}); err != nil {
 				return ErrClientDisconnected
 			}

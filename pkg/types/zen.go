@@ -68,8 +68,38 @@ type ResponsesContent struct {
 
 // ResponsesUsage represents token usage in a Responses response.
 type ResponsesUsage struct {
-	InputTokens  int `json:"input_tokens"`
-	OutputTokens int `json:"output_tokens"`
+	InputTokens            int                            `json:"input_tokens"`
+	OutputTokens           int                            `json:"output_tokens"`
+	TotalTokens            int                            `json:"total_tokens,omitempty"`
+	CachedTokens           *int                           `json:"cached_tokens,omitempty"`
+	PromptCacheHitTokens   int                            `json:"prompt_cache_hit_tokens,omitempty"`
+	PromptCacheMissTokens  int                            `json:"prompt_cache_miss_tokens,omitempty"`
+	InputTokensDetails     *ResponsesInputTokensDetails   `json:"input_tokens_details,omitempty"`
+	OutputTokensDetails    *ResponsesOutputTokensDetails  `json:"output_tokens_details,omitempty"`
+}
+
+// ResponsesInputTokensDetails holds cached token counts.
+type ResponsesInputTokensDetails struct {
+	CachedTokens int `json:"cached_tokens"`
+}
+
+// ResponsesOutputTokensDetails holds output detail counts (e.g. reasoning).
+type ResponsesOutputTokensDetails struct {
+	ReasoningTokens int `json:"reasoning_tokens"`
+}
+
+// EffectiveCacheHitTokens returns the cache hit count from any field.
+func (u *ResponsesUsage) EffectiveCacheHitTokens() int {
+	if u == nil {
+		return 0
+	}
+	if u.InputTokensDetails != nil && u.InputTokensDetails.CachedTokens > 0 {
+		return u.InputTokensDetails.CachedTokens
+	}
+	if u.CachedTokens != nil && *u.CachedTokens > 0 {
+		return *u.CachedTokens
+	}
+	return u.PromptCacheHitTokens
 }
 
 // ResponsesChunk represents a streaming chunk from the Responses API.
@@ -79,6 +109,7 @@ type ResponsesChunk struct {
 	Delta       string               `json:"delta,omitempty"`
 	Output      []ResponsesOutput    `json:"output,omitempty"`
 	Usage       *ResponsesUsage      `json:"usage,omitempty"`
+	Response    *ResponsesResponse   `json:"response,omitempty"`
 	OutputIndex *int                 `json:"output_index,omitempty"`
 	ItemID      string               `json:"item_id,omitempty"`
 	Item        *ResponsesStreamItem `json:"item,omitempty"`
