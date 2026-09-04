@@ -100,6 +100,33 @@ func WithUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, genericCtxKey{}, userID)
 }
 
+// sessionCtxKey is the unexported context-key type used to thread the
+// OpenCode Go session ID (X-Opencode-Session) to upstream-call sites.
+// OpenCode Go requires this header to be stable per conversation as of
+// 2026-09-06; missing it errors.
+type sessionCtxKey struct{}
+
+// WithSessionID returns a derived context carrying the OpenCode Go session
+// ID. The caller derives it in the messages handler — preferred path is the
+// client-supplied X-Opencode-Session header, with a per-user stable mint as
+// the fallback when the client does not send one.
+func WithSessionID(ctx context.Context, sessionID string) context.Context {
+	if sessionID == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, sessionCtxKey{}, sessionID)
+}
+
+// SessionID extracts the OpenCode Go session ID from ctx, or "" if absent.
+func SessionID(ctx context.Context) string {
+	if v := ctx.Value(sessionCtxKey{}); v != nil {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
 func (p *GenericProvider) Execute(ctx context.Context, req *core.NormalizedRequest, model config.ModelConfig) (*core.ExecuteResult, error) {
 	cfg := p.atomic.Get()
 	// Look up our config slice entry by name on every call — cheap, and

@@ -26,6 +26,30 @@ func NewOpenCodeGoProvider(atomic *config.AtomicConfig) *OpenCodeGoProvider {
 	return &OpenCodeGoProvider{baseProvider: newBaseProvider(atomic)}
 }
 
+// opencode CLI identity headers — OpenCode Go's free-tier / optimization
+// gates key off these. Match the upstream opencode CLI so requests pass
+// the versioned User-Agent check and the cli/version routing.
+const (
+	opencodeUserAgent = "opencode/1.18.27"
+	opencodeClient    = "cli"
+	opencodeVersion   = "1.18.27"
+)
+
+// setOpencodeCLIHeaders stamps the headers that make our upstream request
+// look like the official opencode CLI: versioned User-Agent plus
+// x-opencode-client / x-opencode-version, and the per-conversation
+// X-Opencode-Session the messages handler derived. userAgent lets the
+// caller pass a provider-specific value (Go wants opencode/1.18.27; Zen
+// has its own spoofed string).
+func setOpencodeCLIHeaders(req *http.Request, userAgent, sessionID string) {
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("x-opencode-client", opencodeClient)
+	req.Header.Set("x-opencode-version", opencodeVersion)
+	if sessionID != "" {
+		req.Header.Set("X-Opencode-Session", sessionID)
+	}
+}
+
 // Name returns the provider identifier.
 func (p *OpenCodeGoProvider) Name() string { return "opencode-go" }
 
@@ -255,7 +279,7 @@ func (p *OpenCodeGoProvider) executeAnthropic(ctx context.Context, req *core.Nor
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, opencodeUserAgent, SessionID(ctx))
 	httpReq.Header.Set("x-api-key", apiKey)
 
 	start := time.Now()
@@ -299,7 +323,7 @@ func (p *OpenCodeGoProvider) streamAnthropic(ctx context.Context, req *core.Norm
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, opencodeUserAgent, SessionID(ctx))
 	httpReq.Header.Set("x-api-key", apiKey)
 	httpReq.Header.Set("Accept", "text/event-stream")
 
@@ -331,7 +355,7 @@ func (p *OpenCodeGoProvider) doRequest(ctx context.Context, endpoint, apiKey str
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, opencodeUserAgent, SessionID(ctx))
 	if stream {
 		httpReq.Header.Set("Accept", "text/event-stream")
 	}

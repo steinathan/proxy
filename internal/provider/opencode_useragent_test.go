@@ -18,7 +18,14 @@ func assertOpencodeUserAgentServer(t *testing.T, handler func(w http.ResponseWri
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ua := r.Header.Get("User-Agent")
 		if !strings.HasPrefix(ua, "opencode/") {
-			t.Errorf("User-Agent = %q, want prefix %q", ua, "opencode/")
+			t.Errorf("User-Agent = %q, want %q prefix", ua, "opencode/")
+		}
+		if got := r.Header.Get("x-opencode-client"); got != "cli" {
+			t.Errorf("x-opencode-client = %q, want %q", got, "cli")
+		}
+		if got := r.Header.Get("x-opencode-version"); !strings.HasPrefix(got, "opencode/") && got == "" {
+			// empty is fine for the bare provider; otherwise must be a version string
+			t.Errorf("x-opencode-version = %q, want non-empty", got)
 		}
 		handler(w, r)
 	}))

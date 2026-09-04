@@ -217,7 +217,7 @@ func (p *OpenCodeZenProvider) executeAnthropic(ctx context.Context, req *core.No
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, upstreamUserAgent, SessionID(ctx))
 	httpReq.Header.Set("x-api-key", apiKey)
 
 	start := time.Now()
@@ -261,7 +261,7 @@ func (p *OpenCodeZenProvider) streamAnthropic(ctx context.Context, req *core.Nor
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, upstreamUserAgent, SessionID(ctx))
 	httpReq.Header.Set("x-api-key", apiKey)
 	httpReq.Header.Set("Accept", "text/event-stream")
 
@@ -407,7 +407,7 @@ func (p *OpenCodeZenProvider) doRequest(ctx context.Context, endpoint, apiKey st
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, upstreamUserAgent, SessionID(ctx))
 	if stream {
 		httpReq.Header.Set("Accept", "text/event-stream")
 	}
@@ -438,7 +438,7 @@ func (p *OpenCodeZenProvider) doJSONRequest(ctx context.Context, endpoint, apiKe
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	httpReq.Header.Set("User-Agent", upstreamUserAgent)
+	setOpencodeCLIHeaders(httpReq, upstreamUserAgent, SessionID(ctx))
 
 	resp, err := p.httpClient.Do(httpReq)
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/routatic/proxy/internal/client"
 	"github.com/routatic/proxy/internal/config"
 	"github.com/routatic/proxy/internal/core"
@@ -51,6 +52,7 @@ type MessagesHandler struct {
 	history             *history.History // optional: nil means no GUI history
 	storage             StorageWriter    // optional: SQLite persistence for requests/latency
 	atomic              *config.AtomicConfig
+	sessionCache        sync.Map // map[userID]sessionID — stable OpenCode Go session ID per user
 }
 
 // responseWriter wraps http.ResponseWriter to track if headers were written.
@@ -363,6 +365,19 @@ func extractLoopbackUserID(atomic *config.AtomicConfig, r *http.Request) string 
 	return strings.TrimSpace(r.Header.Get("X-User-ID"))
 }
 
+// stableSessionID returns a session ID stable for the given key (typically
+// the X-User-ID), generating a UUID on first use and caching it for the
+// lifetime of the handler. Empty key shares a single process-wide ID so
+// anonymous callers still get a header.
+func (h *MessagesHandler) stableSessionID(key string) string {
+	if v, ok := h.sessionCache.Load(key); ok {
+		return v.(string)
+	}
+	id := uuid.NewString()
+	actual, _ := h.sessionCache.LoadOrStore(key, id)
+	return actual.(string)
+}
+
 // NewMessagesHandler creates a new messages handler.
 func NewMessagesHandler(
 	openCodeClient *client.OpenCodeClient,
@@ -422,6 +437,27 @@ func (h *MessagesHandler) HandleMessages(w http.ResponseWriter, r *http.Request)
 	// When userID is empty (single-user / pre-patch binary / no X-User-ID
 	// header) the provider falls back to round-robin.
 	r = r.WithContext(provider.WithUserID(r.Context(), userID))
+
+	// OpenCode Go requires X-Opencode-Session to be stable per conversation
+	// (errors on missing header as of 2026-09-06). Claude Code sends
+	// X-Claude-Code-Session-Id per chat; forward it under the opencode name.
+	// Falls back to minting per user when the client supplies no session.
+	clientSession := strings.TrimSpace(r.Header.Get("X-Claude-Code-Session-Id"))
+	if clientSession == "" {
+		clientSession = strings.TrimSpace(r.Header.Get("X-Opencode-Session"))
+	}
+	sessionID := clientSession
+	source := "forwarded"
+	if sessionID == "" {
+		sessionID = h.stableSessionID(userID)
+		source = "minted"
+	}
+	r = r.WithContext(provider.WithSessionID(r.Context(), sessionID))
+	h.logger.Info("opencode session",
+		"session_id", sessionID,
+		"source", source,
+		"user_id", userID,
+	)
 
 	// Rate limiting
 	clientIP := middleware.GetClientIP(r)
