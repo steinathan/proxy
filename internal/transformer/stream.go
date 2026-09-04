@@ -824,11 +824,50 @@ func (h *StreamHandler) ProxyResponsesStream(
 	contentIndex := 0
 	var lineBuf []byte
 	contentStarted := false
+	reasoningStarted := false
 	stopSent := false
+	toolBlocks := make(map[int]int) // output_index -> anthropic block index
 	readBuf := readBufPool.Get().(*[]byte)
 	defer readBufPool.Put(readBuf)
 
 	ping := StartIdleWatchdog(clientCtx, cancel, idleTimeout)
+
+	finish := func() error {
+		if _, err := closeOpenBlock(w, contentIndex, &contentStarted, &reasoningStarted); err != nil {
+			return ErrClientDisconnected
+		}
+		if len(toolBlocks) > 0 {
+			indices := make([]int, 0, len(toolBlocks))
+			for _, bi := range toolBlocks {
+				indices = append(indices, bi)
+			}
+			sort.Ints(indices)
+			for _, bi := range indices {
+				if err := writeContentBlockStop(w, bi); err != nil {
+					return ErrClientDisconnected
+				}
+			}
+		}
+		if !stopSent {
+			stopReason := "end_turn"
+			if len(toolBlocks) > 0 {
+				stopReason = "tool_use"
+			}
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type: "message_delta",
+				Delta: &types.Delta{StopReason: stopReason},
+				Usage: &types.Usage{InputTokens: 0, OutputTokens: 0},
+			}); err != nil {
+				return ErrClientDisconnected
+			}
+			stopSent = true
+		}
+		if err := writeSSEEvent(w, types.MessageEvent{Type: "message_stop"}); err != nil {
+			return ErrClientDisconnected
+		}
+		flusher.Flush()
+		return nil
+	}
 
 	for {
 		select {
@@ -843,7 +882,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 			for i := 0; i < n; i++ {
 				b := (*readBuf)[i]
 				if b == '\n' {
-					if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &stopSent, originalModel); err != nil {
+					if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks); err != nil {
 						return err
 					}
 					lineBuf = lineBuf[:0]
@@ -855,7 +894,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 
 		if err == io.EOF {
 			if len(lineBuf) > 0 {
-				if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &stopSent, originalModel); err != nil {
+				if err := h.processResponsesSSELine(w, flusher, lineBuf, &contentIndex, &contentStarted, &reasoningStarted, &stopSent, toolBlocks); err != nil {
 					return err
 				}
 			}
@@ -872,39 +911,7 @@ func (h *StreamHandler) ProxyResponsesStream(
 		}
 	}
 
-	if contentStarted {
-		stopEvent := types.MessageEvent{
-			Type:  "content_block_stop",
-			Index: &contentIndex,
-		}
-		if err := writeSSEEvent(w, stopEvent); err != nil {
-			return ErrClientDisconnected
-		}
-	}
-
-	if !stopSent {
-		msgDelta := types.MessageEvent{
-			Type: "message_delta",
-			Delta: &types.Delta{
-				StopReason: "end_turn",
-			},
-			Usage: &types.Usage{InputTokens: 0, OutputTokens: 0},
-		}
-		if err := writeSSEEvent(w, msgDelta); err != nil {
-			return ErrClientDisconnected
-		}
-		stopSent = true
-	}
-
-	stopEvent := types.MessageEvent{
-		Type: "message_stop",
-	}
-	if err := writeSSEEvent(w, stopEvent); err != nil {
-		return ErrClientDisconnected
-	}
-	flusher.Flush()
-
-	return nil
+	return finish()
 }
 
 func (h *StreamHandler) processResponsesSSELine(
@@ -913,8 +920,9 @@ func (h *StreamHandler) processResponsesSSELine(
 	line []byte,
 	contentIndex *int,
 	contentStarted *bool,
+	reasoningStarted *bool,
 	stopSent *bool,
-	originalModel string,
+	toolBlocks map[int]int,
 ) error {
 	line = bytes.TrimSpace(line)
 	if len(line) == 0 || !bytes.HasPrefix(line, []byte("data: ")) {
@@ -931,44 +939,184 @@ func (h *StreamHandler) processResponsesSSELine(
 		return nil
 	}
 
-	if chunk.Type == "response.output_text.delta" && chunk.Delta != "" {
-		if !*contentStarted {
-			*contentStarted = true
-			startEvent := types.MessageEvent{
-				Type:         "content_block_start",
-				Index:        contentIndex,
-				ContentBlock: &types.ContentBlock{Type: "text", Text: ""},
+	// Text deltas — multiple event names exist across providers.
+	if chunk.Delta != "" {
+		switch chunk.Type {
+		case "response.output_text.delta", "response.text.delta", "response.output_text_delta":
+			if !*contentStarted {
+				if *reasoningStarted {
+					if _, err := closeOpenBlock(w, *contentIndex, contentStarted, reasoningStarted); err != nil {
+						return ErrClientDisconnected
+					}
+					*contentIndex++
+				}
+				*contentStarted = true
+				if err := writeSSEEvent(w, types.MessageEvent{
+					Type:         "content_block_start",
+					Index:        contentIndex,
+					ContentBlock: &types.ContentBlock{Type: "text", Text: ""},
+				}); err != nil {
+					return ErrClientDisconnected
+				}
 			}
-			if err := writeSSEEvent(w, startEvent); err != nil {
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type:  "content_block_delta",
+				Index: contentIndex,
+				Delta: &types.Delta{Type: "text_delta", Text: chunk.Delta},
+			}); err != nil {
 				return ErrClientDisconnected
 			}
+			flusher.Flush()
+			return nil
+		case "response.reasoning_text.delta", "response.reasoning.delta", "response.output_reasoning.delta":
+			if !*reasoningStarted {
+				if *contentStarted {
+					if err := writeContentBlockStop(w, *contentIndex); err != nil {
+						return ErrClientDisconnected
+					}
+					*contentIndex++
+					*contentStarted = false
+				}
+				*reasoningStarted = true
+				if err := writeSSEEvent(w, types.MessageEvent{
+					Type:         "content_block_start",
+					Index:        contentIndex,
+					ContentBlock: &types.ContentBlock{Type: "thinking", Thinking: ""},
+				}); err != nil {
+					return ErrClientDisconnected
+				}
+			}
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type:  "content_block_delta",
+				Index: contentIndex,
+				Delta: &types.Delta{Type: "thinking_delta", Thinking: chunk.Delta},
+			}); err != nil {
+				return ErrClientDisconnected
+			}
+			flusher.Flush()
+			return nil
+		case "response.function_call_arguments.delta", "response.function_call_arguments_delta", "response.output_item.delta":
+			oi := 0
+			if chunk.OutputIndex != nil {
+				oi = *chunk.OutputIndex
+			}
+			if bi, ok := toolBlocks[oi]; ok {
+				if err := writeSSEEvent(w, types.MessageEvent{
+					Type:  "content_block_delta",
+					Index: &bi,
+					Delta: &types.Delta{Type: "input_json_delta", PartialJSON: chunk.Delta},
+				}); err != nil {
+					return ErrClientDisconnected
+				}
+				flusher.Flush()
+			}
+			return nil
 		}
-
-		delta := types.Delta{
-			Type: "text_delta",
-			Text: chunk.Delta,
-		}
-		event := types.MessageEvent{
-			Type:  "content_block_delta",
-			Index: contentIndex,
-			Delta: &delta,
-		}
-		if err := writeSSEEvent(w, event); err != nil {
-			return ErrClientDisconnected
-		}
-		flusher.Flush()
 	}
 
-	if chunk.Type == "response.completed" || chunk.Type == "response.done" {
-		if !*stopSent {
-			msgDelta := types.MessageEvent{
-				Type: "message_delta",
-				Delta: &types.Delta{
-					StopReason: "end_turn",
-				},
-				Usage: usageInfoToAnthropic(nil),
+	// Tool call start — output_item.added with function_call item.
+	if chunk.Type == "response.output_item.added" && chunk.Item != nil && chunk.Item.Type == "function_call" {
+		oi := 0
+		if chunk.OutputIndex != nil {
+			oi = *chunk.OutputIndex
+		}
+		if _, exists := toolBlocks[oi]; !exists {
+			if hadBlock, err := closeOpenBlock(w, *contentIndex, contentStarted, reasoningStarted); err != nil {
+				return ErrClientDisconnected
+			} else if hadBlock || len(toolBlocks) > 0 {
+				*contentIndex++
 			}
-			if err := writeSSEEvent(w, msgDelta); err != nil {
+			bi := *contentIndex
+			toolBlocks[oi] = bi
+			toolID := chunk.Item.CallID
+			if toolID == "" {
+				toolID = chunk.Item.ID
+			}
+			if toolID == "" {
+				toolID = fmt.Sprintf("toolu_%s", generateID())
+			}
+			name := chunk.Item.Name
+			if name == "" {
+				name = "tool"
+			}
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type:  "content_block_start",
+				Index: &bi,
+				ContentBlock: &types.ContentBlock{
+					Type:  "tool_use",
+					ID:    toolID,
+					Name:  name,
+					Input: json.RawMessage(`{}`),
+				},
+			}); err != nil {
+				return ErrClientDisconnected
+			}
+			// If arguments already present on the added event, stream them.
+			if chunk.Item.Arguments != "" && chunk.Item.Arguments != "{}" {
+				if err := writeSSEEvent(w, types.MessageEvent{
+					Type:  "content_block_delta",
+					Index: &bi,
+					Delta: &types.Delta{Type: "input_json_delta", PartialJSON: chunk.Item.Arguments},
+				}); err != nil {
+					return ErrClientDisconnected
+				}
+			}
+			flusher.Flush()
+		}
+		return nil
+	}
+
+	// Also handle function_call delta when Item is present directly
+	if chunk.Item != nil && chunk.Item.Type == "function_call" && chunk.Delta != "" {
+		oi := 0
+		if chunk.OutputIndex != nil {
+			oi = *chunk.OutputIndex
+		}
+		if bi, ok := toolBlocks[oi]; ok {
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type:  "content_block_delta",
+				Index: &bi,
+				Delta: &types.Delta{Type: "input_json_delta", PartialJSON: chunk.Delta},
+			}); err != nil {
+				return ErrClientDisconnected
+			}
+			flusher.Flush()
+		}
+		return nil
+	}
+
+	if chunk.Type == "response.completed" || chunk.Type == "response.done" || chunk.Type == "response.output_item.done" {
+		// output_item.done for function_call just confirms one tool; the full
+		// response.completed will trigger finish() — avoid sending duplicate
+		// message_delta here.
+		if chunk.Type == "response.output_item.done" {
+			return nil
+		}
+		if !*stopSent {
+			if _, err := closeOpenBlock(w, *contentIndex, contentStarted, reasoningStarted); err != nil {
+				return ErrClientDisconnected
+			}
+			if len(toolBlocks) > 0 {
+				indices := make([]int, 0, len(toolBlocks))
+				for _, bi := range toolBlocks {
+					indices = append(indices, bi)
+				}
+				sort.Ints(indices)
+				for _, bi := range indices {
+					if err := writeContentBlockStop(w, bi); err != nil {
+						return ErrClientDisconnected
+					}
+				}
+			}
+			stopReason := "end_turn"
+			if len(toolBlocks) > 0 {
+				stopReason = "tool_use"
+			}
+			if err := writeSSEEvent(w, types.MessageEvent{
+				Type: "message_delta",
+				Delta: &types.Delta{StopReason: stopReason},
+				Usage: usageInfoToAnthropic(nil),
+			}); err != nil {
 				return ErrClientDisconnected
 			}
 			*stopSent = true

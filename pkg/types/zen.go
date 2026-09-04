@@ -74,11 +74,25 @@ type ResponsesUsage struct {
 
 // ResponsesChunk represents a streaming chunk from the Responses API.
 type ResponsesChunk struct {
-	Type   string            `json:"type"`
-	ID     string            `json:"id,omitempty"`
-	Delta  string            `json:"delta,omitempty"`
-	Output []ResponsesOutput `json:"output,omitempty"`
-	Usage  *ResponsesUsage   `json:"usage,omitempty"`
+	Type        string               `json:"type"`
+	ID          string               `json:"id,omitempty"`
+	Delta       string               `json:"delta,omitempty"`
+	Output      []ResponsesOutput    `json:"output,omitempty"`
+	Usage       *ResponsesUsage      `json:"usage,omitempty"`
+	OutputIndex *int                 `json:"output_index,omitempty"`
+	ItemID      string               `json:"item_id,omitempty"`
+	Item        *ResponsesStreamItem `json:"item,omitempty"`
+}
+
+// ResponsesStreamItem is the item payload inside a Responses stream event
+// (e.g. response.output_item.added).
+type ResponsesStreamItem struct {
+	Type      string `json:"type"`
+	ID        string `json:"id,omitempty"`
+	CallID    string `json:"call_id,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Arguments string `json:"arguments,omitempty"`
+	Status    string `json:"status,omitempty"`
 }
 
 // Google Gemini API types.
