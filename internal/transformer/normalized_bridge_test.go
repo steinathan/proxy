@@ -6,6 +6,7 @@ import (
 
 	"github.com/routatic/proxy/internal/config"
 	"github.com/routatic/proxy/internal/core"
+	"github.com/routatic/proxy/pkg/types"
 )
 
 func TestNormalizedToAnthropic_SystemPromptWithNewline(t *testing.T) {
@@ -72,12 +73,16 @@ func TestNormalizedToResponses_SystemPromptWithNewline(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	if len(responsesReq.Input) != 2 {
-		t.Fatalf("input count mismatch: got %d, want 2", len(responsesReq.Input))
+	var inputs []types.ResponsesInput
+	if err := json.Unmarshal(responsesReq.Input, &inputs); err != nil {
+		t.Fatalf("decode input: %v", err)
+	}
+	if len(inputs) != 2 {
+		t.Fatalf("input count mismatch: got %d, want 2", len(inputs))
 	}
 
 	var systemPrompt string
-	if err := json.Unmarshal(responsesReq.Input[0].Content, &systemPrompt); err != nil {
+	if err := json.Unmarshal(inputs[0].Content, &systemPrompt); err != nil {
 		t.Fatalf("system prompt content was not valid JSON: %v", err)
 	}
 	if systemPrompt != req.SystemPrompt {
@@ -85,7 +90,7 @@ func TestNormalizedToResponses_SystemPromptWithNewline(t *testing.T) {
 	}
 
 	var messageContent string
-	if err := json.Unmarshal(responsesReq.Input[1].Content, &messageContent); err != nil {
+	if err := json.Unmarshal(inputs[1].Content, &messageContent); err != nil {
 		t.Fatalf("message content was not valid JSON: %v", err)
 	}
 	if messageContent != req.Messages[0].TextContent() {

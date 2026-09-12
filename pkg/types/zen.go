@@ -6,12 +6,39 @@ import "encoding/json"
 // Reference: https://platform.openai.com/docs/api-reference/responses
 
 // ResponsesRequest represents a request to the OpenAI Responses API.
+//
+// The struct is used both for output (Anthropic → Responses upstream) and for
+// input (Codex → /v1/responses). Fields below marked "input-only" are populated
+// by the client side only and are not written when NormalizedToResponses
+// builds an outbound upstream request (their json tags carry `omitempty`, so
+// zero values are dropped from the upstream payload).
 type ResponsesRequest struct {
-	Model     string              `json:"model"`
-	Input     []ResponsesInput    `json:"input"`
-	Stream    bool                `json:"stream,omitempty"`
-	Tools     []ResponsesTool     `json:"tools,omitempty"`
+	Model string           `json:"model"`
+	Input json.RawMessage `json:"input"`
+
+	Stream bool              `json:"stream,omitempty"`
+	Tools  []ResponsesTool   `json:"tools,omitempty"`
 	Reasoning *ResponsesReasoning `json:"reasoning,omitempty"`
+
+	// Input-only fields. The existing output path ignores these.
+	Instructions       string                  `json:"instructions,omitempty"`
+	Temperature        *float64                `json:"temperature,omitempty"`
+	TopP               *float64                `json:"top_p,omitempty"`
+	MaxOutputTokens    int                     `json:"max_output_tokens,omitempty"`
+	ParallelToolCalls  *bool                   `json:"parallel_tool_calls,omitempty"`
+	Truncation         string                  `json:"truncation,omitempty"`
+	Store              *bool                   `json:"store,omitempty"`
+	Metadata           map[string]string       `json:"metadata,omitempty"`
+	Text               *ResponsesTextFormat    `json:"text,omitempty"`
+	ToolChoice         json.RawMessage         `json:"tool_choice,omitempty"`
+	User               string                  `json:"user,omitempty"`
+	PreviousResponseID string                  `json:"previous_response_id,omitempty"`
+	Background         *bool                   `json:"background,omitempty"`
+}
+
+// ResponsesTextFormat controls structured output formatting.
+type ResponsesTextFormat struct {
+	Format json.RawMessage `json:"format,omitempty"`
 }
 
 // ResponsesInput represents a single input item in the Responses request.

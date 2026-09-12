@@ -243,9 +243,10 @@ func (p *AWSBedrockProvider) buildResponsesRequest(req *core.NormalizedRequest, 
 		})
 	}
 
+	rawInputs, _ := json.Marshal(inputs)
 	return &types.ResponsesRequest{
 		Model:  model.ModelID,
-		Input:  inputs,
+		Input:  json.RawMessage(rawInputs),
 		Stream: false,
 	}
 }

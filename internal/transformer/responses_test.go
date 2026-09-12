@@ -8,6 +8,16 @@ import (
 	"github.com/routatic/proxy/pkg/types"
 )
 
+// decodeInputs unmarshals a ResponsesRequest Input (json.RawMessage) into a
+// []ResponsesInput for tests that need to inspect items by field.
+func decodeInputs(raw json.RawMessage) []types.ResponsesInput {
+	var out []types.ResponsesInput
+	if err := json.Unmarshal(raw, &out); err != nil {
+		panic(err)
+	}
+	return out
+}
+
 func TestTransformToResponses_ToolResultInlinesAsText(t *testing.T) {
 	transformer := NewRequestTransformer()
 
@@ -36,26 +46,28 @@ func TestTransformToResponses_ToolResultInlinesAsText(t *testing.T) {
 		t.Fatalf("TransformToResponses() error = %v", err)
 	}
 
-	for i, item := range res.Input {
+	resInputs := decodeInputs(res.Input)
+
+	for i, item := range resInputs {
 		if item.Role == "tool" {
 			t.Fatalf("input[%d]: role \"tool\" leaked into input array; tool_result must be function_call_output", i)
 		}
 	}
 
-	if len(res.Input) < 3 {
-		t.Fatalf("len(Input) = %d, want at least 3 (user, function_call, function_call_output)", len(res.Input))
+	if len(resInputs) < 3 {
+		t.Fatalf("len(Input) = %d, want at least 3 (user, function_call, function_call_output)", len(resInputs))
 	}
 
 	// Find the function_call_output for toolu_123
 	found := false
-	for _, item := range res.Input {
+	for _, item := range resInputs {
 		if item.Type == "function_call_output" && item.CallID == "toolu_123" && item.Output == "sunny, 22C" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Fatalf("no function_call_output for toolu_123 with output sunny, 22C in %v", res.Input)
+		t.Fatalf("no function_call_output for toolu_123 with output sunny, 22C in %v", resInputs)
 	}
 }
 
@@ -80,16 +92,18 @@ func TestTransformToResponses_ToolResultWithoutTextStillEmits(t *testing.T) {
 		t.Fatalf("TransformToResponses() error = %v", err)
 	}
 
-	for i, item := range res.Input {
+	resInputs := decodeInputs(res.Input)
+
+	for i, item := range resInputs {
 		if item.Role == "tool" {
 			t.Fatalf("input[%d]: role \"tool\" leaked into input array", i)
 		}
 	}
 
-	if len(res.Input) != 1 {
-		t.Fatalf("len(Input) = %d, want 1 (the function_call_output)", len(res.Input))
+	if len(resInputs) != 1 {
+		t.Fatalf("len(Input) = %d, want 1 (the function_call_output)", len(resInputs))
 	}
-	if res.Input[0].Type != "function_call_output" || res.Input[0].CallID != "toolu_999" || res.Input[0].Output != "done" {
-		t.Fatalf("input[0] = %+v, want function_call_output with call_id toolu_999 and output done", res.Input[0])
+	if resInputs[0].Type != "function_call_output" || resInputs[0].CallID != "toolu_999" || resInputs[0].Output != "done" {
+		t.Fatalf("input[0] = %+v, want function_call_output with call_id toolu_999 and output done", resInputs[0])
 	}
 }

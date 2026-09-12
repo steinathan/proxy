@@ -137,6 +137,18 @@ func NewServer(atomic *config.AtomicConfig, captureLogger *debug.CaptureLogger) 
 		storageWriter,
 		atomic,
 	)
+	responsesHandler := handlers.NewResponsesHandler(
+		openCodeClient,
+		providerRegistry,
+		modelRouter,
+		fallbackHandler,
+		tokenCounter,
+		metrics,
+		captureLogger,
+		hist,
+		storageWriter,
+		atomic,
+	)
 	healthHandler := handlers.NewHealthHandler(tokenCounter, fallbackHandler, metrics, statusStore)
 	modelsHandler := handlers.NewModelsHandler(modelRouter)
 
@@ -146,6 +158,7 @@ func NewServer(atomic *config.AtomicConfig, captureLogger *debug.CaptureLogger) 
 	// API routes.
 	mux.Handle("/v1/messages", handlers.NewAnthropicFirstHandler(atomic, http.HandlerFunc(messagesHandler.HandleMessages)))
 	mux.HandleFunc("/v1/messages/count_tokens", healthHandler.HandleCountTokens)
+	mux.HandleFunc("/v1/responses", responsesHandler.HandleResponses)
 	mux.HandleFunc("/v1/models", modelsHandler.HandleListModels)
 	mux.HandleFunc("/health", healthHandler.HandleHealth)
 	mux.HandleFunc("/statusline", healthHandler.HandleStatusline)

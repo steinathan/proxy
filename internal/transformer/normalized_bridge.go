@@ -47,9 +47,11 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 		Model: model.ModelID,
 	}
 
+	var inputs []types.ResponsesInput
+
 	// System prompt becomes a "developer" role input.
 	if req.SystemPrompt != "" {
-		responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+		inputs = append(inputs, types.ResponsesInput{
 			Role:    "developer",
 			Content: rawJSONString(req.SystemPrompt),
 		})
@@ -60,7 +62,7 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 		// Handle tool results as separate function_call_output inputs
 		if len(msg.ToolResultsList()) > 0 {
 			for _, tr := range msg.ToolResultsList() {
-				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+				inputs = append(inputs, types.ResponsesInput{
 					Type:   "function_call_output",
 					CallID: tr.ToolCallID,
 					Output: tr.Content,
@@ -68,7 +70,7 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 			}
 			// If the message also has text, add it as a separate input
 			if text := msg.TextContent(); text != "" {
-				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+				inputs = append(inputs, types.ResponsesInput{
 					Role:    msg.Role,
 					Content: rawJSONString(text),
 				})
@@ -79,7 +81,7 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 		if len(msg.ToolCallsList()) > 0 {
 			// Flush any text first
 			if text := msg.TextContent(); text != "" {
-				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+				inputs = append(inputs, types.ResponsesInput{
 					Role:    msg.Role,
 					Content: rawJSONString(text),
 				})
@@ -89,7 +91,7 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 				if args == "" {
 					args = "{}"
 				}
-				responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+				inputs = append(inputs, types.ResponsesInput{
 					Type:      "function_call",
 					CallID:    tc.ID,
 					Name:      tc.Name,
@@ -111,11 +113,18 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 			}
 		}
 		if content != "" {
-			responsesReq.Input = append(responsesReq.Input, types.ResponsesInput{
+			inputs = append(inputs, types.ResponsesInput{
 				Role:    msg.Role,
 				Content: rawJSONString(content),
 			})
 		}
+	}
+
+	// Marshal the assembled inputs array back into json.RawMessage so the
+	// request shape matches the input decoder (which accepts either an array
+	// or a bare string).
+	if b, err := json.Marshal(inputs); err == nil {
+		responsesReq.Input = json.RawMessage(b)
 	}
 
 	// Convert tools.

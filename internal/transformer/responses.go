@@ -91,9 +91,10 @@ func (t *RequestTransformer) TransformToResponses(
 		}
 	}
 
+	rawInput, _ := json.Marshal(input)
 	req := &types.ResponsesRequest{
 		Model:  model.ModelID,
-		Input:  input,
+		Input:  json.RawMessage(rawInput),
 		Stream: anthropicReq.Stream != nil && *anthropicReq.Stream,
 	}
 	// Transform tools if present
