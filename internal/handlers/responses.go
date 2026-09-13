@@ -199,9 +199,12 @@ func (h *ResponsesHandler) HandleResponses(w http.ResponseWriter, r *http.Reques
 	normalizedReq := core.NormalizeResponsesRequest(&req)
 	h.metrics.RecordStage(metrics.StageNormalization, time.Since(normalizeStart))
 
-	modelChain, err = h.filterResponsesCompatible(modelChain)
-	if err != nil {
-		writeResponsesError(w, http.StatusBadRequest, err.Error(), "invalid_request_error")
+	// The chain keeps Anthropic-format upstreams too — the streaming and
+	// non-streaming dispatch translate Anthropic wire output back to Responses
+	// on the way out (responses_translate.go). This lets minimax serve Codex
+	// the same way it serves Claude Code.
+	if len(modelChain) == 0 {
+		writeResponsesError(w, http.StatusBadRequest, "no compatible upstream available", "invalid_request_error")
 		return
 	}
 
@@ -485,7 +488,16 @@ func (h *ResponsesHandler) handleStreaming(
 		streamReader := transformer.NewCtxReadCloser(attemptCtx, streamBody)
 
 		atomic.StoreInt32(&heartbeatPaused, 1)
-		errProxy := proxyResponsesPassthroughStream(rw, streamReader, requestedModel, idleTimeout, attemptCtx, cancelAttempt)
+		// Dispatch on upstream wire format: Responses upstreams byte-passthrough;
+		// Anthropic upstreams (e.g. minimax) translate SSE on the way out so the
+		// Responses client (codex, ChatGPT.app) sees a valid Responses stream.
+		var errProxy error
+		switch prov.WireFormat(model) {
+		case core.WireFormatAnthropic:
+			errProxy = proxyAnthropicToResponsesStream(rw, streamReader, requestedModel, idleTimeout, attemptCtx, cancelAttempt, h.logger)
+		default:
+			errProxy = proxyResponsesPassthroughStream(rw, streamReader, requestedModel, idleTimeout, attemptCtx, cancelAttempt)
+		}
 		atomic.StoreInt32(&heartbeatPaused, 0)
 
 		if errProxy != nil {
@@ -587,13 +599,14 @@ func (h *ResponsesHandler) handleNonStreaming(
 			if !ok {
 				return nil, fmt.Errorf("provider %q not registered", model.Provider)
 			}
-			if prov.WireFormat(model) != core.WireFormatOpenAIResponses {
-				return nil, fmt.Errorf("provider %q wire_format=%s, expected responses",
-					model.Provider, prov.WireFormat(model).String())
-			}
 			execResult, execErr := prov.Execute(attemptCtx, normalizedReq, model)
 			if execErr != nil {
 				return nil, execErr
+			}
+			// Anthropic-format bodies need conversion to Responses JSON so the
+			// Responses client can parse them. Other wire formats pass through.
+			if prov.WireFormat(model) == core.WireFormatAnthropic {
+				execResult.Body = anthropicBodyToResponses(execResult.Body, model.ModelID)
 			}
 			return execResult.Body, nil
 		},

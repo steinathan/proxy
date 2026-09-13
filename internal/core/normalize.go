@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/routatic/proxy/pkg/types"
 )
@@ -206,6 +207,13 @@ func NormalizeResponsesRequest(req *types.ResponsesRequest) *NormalizedRequest {
 	}
 
 	for _, tool := range req.Tools {
+		// Skip tools with no name — minimax rejects the entire request with
+		// `invalid params, function name is empty (2013)` if any tool definition
+		// has an empty name. Codex doesn't usually send nameless tools but the
+		// safety check is cheap.
+		if strings.TrimSpace(tool.Name) == "" {
+			continue
+		}
 		nr.Tools = append(nr.Tools, NormalizedToolDef{
 			Name:        tool.Name,
 			Description: tool.Description,

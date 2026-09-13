@@ -256,7 +256,29 @@
       }
     ]
   },
-  "model_overrides": {},
+  "model_overrides": {
+    "gpt-5": {
+      "provider": "minimax",
+      "model_id": "minimax-m3",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "gpt-5-mini": {
+      "provider": "minimax",
+      "model_id": "minimax-m3",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    },
+    "gpt-5.5": {
+      "provider": "minimax",
+      "model_id": "minimax-m3",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "vision": true
+    }
+  },
   "model_family_overrides": {
     "opus": {
       "provider": "minimax",
