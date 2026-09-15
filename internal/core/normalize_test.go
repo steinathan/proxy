@@ -45,15 +45,16 @@ func TestNormalizeRequestPreservesOrderedBlocksAndCacheDirectives(t *testing.T) 
 func TestNormalizeRequest_StripsAdaptiveThinkingType(t *testing.T) {
 	// Claude Code / Codex send thinking.type = "adaptive" or "auto", which
 	// OpenCode Go rejects (unknown variant). Normalization must drop the
-	// effort so the request goes through without forcing a value.
+	// effort so the request goes through without forcing a value. disabled is
+	// also stripped — some upstreams (muse-spark) reject even "none".
 	for _, tc := range []struct {
 		thinkingType string
 		wantEffort   string
 	}{
 		{"adaptive", ""},
 		{"auto", ""},
+		{"disabled", ""},
 		{"enabled", "enabled"},
-		{"disabled", "disabled"},
 	} {
 		req := &types.MessageRequest{
 			Model:    "claude-sonnet-5",

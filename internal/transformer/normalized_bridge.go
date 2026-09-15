@@ -45,18 +45,15 @@ func NormalizedToAnthropic(req *core.NormalizedRequest, model config.ModelConfig
 // (which may hold Anthropic thinking.type values like "disabled"/"enabled")
 // to the OpenAI Responses reasoning.effort enum. Returns "" to omit the
 // field when no valid mapping exists — omitting is safer than forwarding an
-// unknown variant and 400ing upstream.
-// normalizeReasoningEffortForResponses maps the internal ReasoningEffort
-// (which may hold Anthropic thinking.type values like "disabled"/"enabled")
-// to the OpenAI Responses reasoning.effort enum. Returns "" to omit the
-// field when no valid mapping exists — omitting is safer than forwarding an
-// unknown variant and 400ing upstream.
+// unknown variant and 400ing upstream. "disabled" is stripped — some
+// upstreams (muse-spark) reject even "none" with "does not support none
+// with this model", so the only safe general translation is omit.
 func normalizeReasoningEffortForResponses(effort string, budget int) string {
 	switch effort {
 	case "none", "minimal", "low", "medium", "high", "xhigh", "max":
 		return effort
 	case "disabled":
-		return "none"
+		return ""
 	case "enabled":
 		if budget > 0 {
 			switch {

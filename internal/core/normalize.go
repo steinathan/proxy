@@ -37,11 +37,14 @@ func NormalizeRequest(anthropicReq *types.MessageRequest) *NormalizedRequest {
 	if len(anthropicReq.Thinking) > 0 {
 		var tc thinkingConfig
 		if err := json.Unmarshal(anthropicReq.Thinking, &tc); err == nil {
-			// "adaptive"/"auto" delegate effort-picking to the upstream, but
-			// OpenCode Go doesn't recognize those variants and 400s. Drop the
-			// field so the request goes through without forcing a value.
-			if tc.Type != "adaptive" && tc.Type != "auto" {
-				nr.ReasoningEffort = tc.Type
+			nr.ReasoningEffort = tc.Type
+			// Anthropic thinking.type variants like adaptive/auto/disabled
+			// are not valid Responses reasoning.effort values. They leak
+			// through NormalizedRequest.ReasoningEffort and 400 on muse-spark
+			// and minimax. Normalize here so every downstream bridge can rely
+			// on the field being either empty or a valid Responses effort.
+			if tc.Type == "adaptive" || tc.Type == "auto" || tc.Type == "disabled" {
+				nr.ReasoningEffort = ""
 			}
 			nr.ThinkingBudget = tc.BudgetTokens
 		}
@@ -143,7 +146,12 @@ func NormalizeResponsesRequest(req *types.ResponsesRequest) *NormalizedRequest {
 		TopP:         req.TopP,
 	}
 	if req.Reasoning != nil && req.Reasoning.Effort != "" {
-		nr.ReasoningEffort = req.Reasoning.Effort
+		// Same normalization as above — strip variants the upstream rejects.
+		switch req.Reasoning.Effort {
+		case "adaptive", "auto", "disabled":
+		default:
+			nr.ReasoningEffort = req.Reasoning.Effort
+		}
 	}
 
 	// Instructions and developer-role items fold into SystemPrompt. If a
