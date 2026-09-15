@@ -46,6 +46,9 @@ func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig
 	responsesReq := &types.ResponsesRequest{
 		Model: model.ModelID,
 	}
+	if req.ReasoningEffort != "" {
+		responsesReq.Reasoning = &types.ResponsesReasoning{Effort: req.ReasoningEffort}
+	}
 
 	var inputs []types.ResponsesInput
 

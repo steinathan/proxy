@@ -240,7 +240,11 @@ func validateResponsesRequest(req *types.ResponsesRequest) error {
 		return fmt.Errorf("text.format is not supported")
 	}
 	if req.Reasoning != nil && req.Reasoning.Effort != "" {
-		return fmt.Errorf("reasoning.effort is not supported")
+		switch req.Reasoning.Effort {
+		case "minimal", "low", "medium", "high", "xhigh", "max":
+		default:
+			return fmt.Errorf("reasoning.effort %q is not supported", req.Reasoning.Effort)
+		}
 	}
 	return nil
 }
