@@ -14,3 +14,4 @@ minimax
 deepseek
 together
 gemini_free
+abliteration
