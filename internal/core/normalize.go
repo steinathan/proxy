@@ -37,7 +37,12 @@ func NormalizeRequest(anthropicReq *types.MessageRequest) *NormalizedRequest {
 	if len(anthropicReq.Thinking) > 0 {
 		var tc thinkingConfig
 		if err := json.Unmarshal(anthropicReq.Thinking, &tc); err == nil {
-			nr.ReasoningEffort = tc.Type
+			// "adaptive"/"auto" delegate effort-picking to the upstream, but
+			// OpenCode Go doesn't recognize those variants and 400s. Drop the
+			// field so the request goes through without forcing a value.
+			if tc.Type != "adaptive" && tc.Type != "auto" {
+				nr.ReasoningEffort = tc.Type
+			}
 			nr.ThinkingBudget = tc.BudgetTokens
 		}
 	}
