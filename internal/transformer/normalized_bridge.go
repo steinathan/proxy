@@ -41,13 +41,53 @@ func NormalizedToAnthropic(req *core.NormalizedRequest, model config.ModelConfig
 	return anthropicReq
 }
 
+// normalizeReasoningEffortForResponses maps the internal ReasoningEffort
+// (which may hold Anthropic thinking.type values like "disabled"/"enabled")
+// to the OpenAI Responses reasoning.effort enum. Returns "" to omit the
+// field when no valid mapping exists — omitting is safer than forwarding an
+// unknown variant and 400ing upstream.
+// normalizeReasoningEffortForResponses maps the internal ReasoningEffort
+// (which may hold Anthropic thinking.type values like "disabled"/"enabled")
+// to the OpenAI Responses reasoning.effort enum. Returns "" to omit the
+// field when no valid mapping exists — omitting is safer than forwarding an
+// unknown variant and 400ing upstream.
+func normalizeReasoningEffortForResponses(effort string, budget int) string {
+	switch effort {
+	case "none", "minimal", "low", "medium", "high", "xhigh", "max":
+		return effort
+	case "disabled":
+		return "none"
+	case "enabled":
+		if budget > 0 {
+			switch {
+			case budget <= 2048:
+				return "low"
+			case budget <= 8192:
+				return "medium"
+			case budget <= 32768:
+				return "high"
+			default:
+				return "max"
+			}
+		}
+		return ""
+	case "adaptive", "auto":
+		return ""
+	default:
+		return ""
+	}
+}
+
 // NormalizedToResponses converts a NormalizedRequest to a ResponsesRequest.
 func NormalizedToResponses(req *core.NormalizedRequest, model config.ModelConfig) *types.ResponsesRequest {
 	responsesReq := &types.ResponsesRequest{
 		Model: model.ModelID,
 	}
 	if req.ReasoningEffort != "" {
-		responsesReq.Reasoning = &types.ResponsesReasoning{Effort: req.ReasoningEffort}
+		effort := normalizeReasoningEffortForResponses(req.ReasoningEffort, req.ThinkingBudget)
+		if effort != "" {
+			responsesReq.Reasoning = &types.ResponsesReasoning{Effort: effort}
+		}
 	}
 
 	var inputs []types.ResponsesInput
