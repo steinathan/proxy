@@ -241,7 +241,12 @@ func validateResponsesRequest(req *types.ResponsesRequest) error {
 	}
 	if req.Reasoning != nil && req.Reasoning.Effort != "" {
 		switch req.Reasoning.Effort {
-		case "minimal", "low", "medium", "high", "xhigh", "max":
+		case "none", "minimal", "low", "medium", "high", "xhigh", "max":
+		case "adaptive", "auto":
+			// Adaptive/auto: client delegates pick to upstream. OpenCode Go
+			// supports neither; strip the field so the request goes through
+			// without us forcing a value the upstream will 400 on.
+			req.Reasoning = nil
 		default:
 			return fmt.Errorf("reasoning.effort %q is not supported", req.Reasoning.Effort)
 		}

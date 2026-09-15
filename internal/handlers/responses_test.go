@@ -79,10 +79,19 @@ func TestValidateResponsesRequest(t *testing.T) {
 			wantErr: "",
 		},
 		{
+			name: "reasoning.effort adaptive stripped (no error)",
+			req: &types.ResponsesRequest{
+				Model:     "gpt-5",
+				Input:     mkInput([]types.ResponsesInput{{Role: "user", Content: jsonRaw(`"hi"`)}}),
+				Reasoning: &types.ResponsesReasoning{Effort: "adaptive"},
+			},
+			wantErr: "",
+		},
+		{
 			name: "reasoning.effort invalid rejected",
 			req: &types.ResponsesRequest{
-				Model: "gpt-5",
-				Input: mkInput([]types.ResponsesInput{{Role: "user", Content: jsonRaw(`"hi"`)}}),
+				Model:     "gpt-5",
+				Input:     mkInput([]types.ResponsesInput{{Role: "user", Content: jsonRaw(`"hi"`)}}),
 				Reasoning: &types.ResponsesReasoning{Effort: "extreme"},
 			},
 			wantErr: "reasoning",
