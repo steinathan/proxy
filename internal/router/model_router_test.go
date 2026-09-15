@@ -391,6 +391,48 @@ func TestRouteWithOverride_PreservesNonOpenCodeProvider(t *testing.T) {
 	}
 }
 
+func TestRouteWithFamilyOverride_GPTFamily(t *testing.T) {
+	// Exact model_override must win over the substring family override for
+	// gpt-5, while a model with no exact entry (gpt-6-astra) falls through
+	// to the "gpt" family override.
+	cfg := &config.Config{
+		ModelOverrides: map[string]config.ModelConfig{
+			"gpt-5": {Provider: "minimax", ModelID: "minimax-m3"},
+		},
+		ModelFamilyOverrides: map[string]config.ModelConfig{
+			"gpt": {Provider: "opencode-go", ModelID: "longcat-2.0"},
+		},
+		Fallbacks: map[string][]config.ModelConfig{
+			"default": {{Provider: "opencode-go", ModelID: "mimo-v2.5"}},
+		},
+	}
+	router := NewModelRouter(newTestAtomicConfig(cfg))
+
+	exact, ok := router.RouteWithOverride("gpt-5")
+	if !ok {
+		t.Fatal("expected exact override for gpt-5")
+	}
+	if exact.Primary.ModelID != "minimax-m3" {
+		t.Fatalf("gpt-5 exact override = %q, want minimax-m3", exact.Primary.ModelID)
+	}
+
+	family, ok := router.RouteWithFamilyOverride("gpt-6-astra")
+	if !ok {
+		t.Fatal("expected gpt family override for gpt-6-astra")
+	}
+	if family.Primary.ModelID != "longcat-2.0" {
+		t.Fatalf("gpt-6-astra family override = %q, want longcat-2.0", family.Primary.ModelID)
+	}
+
+	familySol, ok := router.RouteWithFamilyOverride("gpt-5.6-sol")
+	if !ok {
+		t.Fatal("expected gpt family override for gpt-5.6-sol")
+	}
+	if familySol.Primary.ModelID != "longcat-2.0" {
+		t.Fatalf("gpt-5.6-sol family override = %q, want longcat-2.0", familySol.Primary.ModelID)
+	}
+}
+
 func TestRouteWithOverride_NoMatch(t *testing.T) {
 	cfg := &config.Config{
 		ModelOverrides: map[string]config.ModelConfig{

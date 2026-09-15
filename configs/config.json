@@ -308,6 +308,14 @@
       "temperature": 0.7,
       "max_tokens": 4096,
       "vision": true
+    },
+    "gpt": {
+      "provider": "opencode-go",
+      "model_id": "longcat-2.0",
+      "wire_format": "responses",
+      "temperature": 0.7,
+      "max_tokens": 4096,
+      "vision": true
     }
   },
   "minimax": {

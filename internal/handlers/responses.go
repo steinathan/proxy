@@ -535,6 +535,20 @@ func (h *ResponsesHandler) handleStreaming(
 		}
 
 		latency := time.Since(streamStart)
+
+		// Empty-response guard: some upstreams (e.g. muse-spark on the
+		// Responses path) complete the stream with zero tokens and no SSE
+		// payload. Treat that as a failure so the fallback chain tries the
+		// next model instead of returning nothing to the client.
+		if !rw.ssePayloadWritten && !rw.hasContent() {
+			h.logger.Warn("responses stream returned no output, triggering fallback",
+				"model", model.ModelID, "provider", model.Provider)
+			if rw.wroteHeader {
+				h.sendStreamError(rw, "upstream returned empty response")
+			}
+			continue
+		}
+
 		h.metrics.RecordSuccess(metrics.ModelKey(model.Provider, model.ModelID), latency)
 		h.metrics.RecordStage(metrics.StageUpstream, latency)
 		if firstContentAt := rw.firstContentTime(); !firstContentAt.IsZero() {
